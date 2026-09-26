@@ -1,0 +1,148 @@
+<div class="p-6 max-w-2xl mx-auto space-y-6">
+  <a routerLink="/dashboard/users" class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+    ← Back to users
+  </a>
+
+  @if (loading()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Loading user…</div>
+  } @else if (notFound()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">User not found.</div>
+  } @else if (user(); as u) {
+    @if (errorMessage()) {
+      <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="h-14 w-14 rounded-full bg-[var(--color-primary-400)] text-white flex items-center justify-center text-xl font-semibold">
+          {{ u.firstName.charAt(0) }}
+        </div>
+        <div>
+          <h1 class="text-xl font-semibold">{{ u.firstName }} {{ u.lastName }}</h1>
+          <p class="text-sm text-[var(--color-text-muted)]">{{ u.email }}</p>
+        </div>
+      </div>
+
+      @if (!editing()) {
+        <div class="flex items-center gap-2">
+          <button type="button" class="btn-outline" (click)="startEdit()">
+            <app-icon name="settings" [size]="15" />
+            Edit
+          </button>
+          <button
+            type="button"
+            class="btn bg-[var(--color-danger-soft)] text-[var(--color-danger)] hover:bg-red-100"
+            [disabled]="deleting()"
+            (click)="remove()"
+          >
+            {{ deleting() ? 'Deleting…' : 'Delete' }}
+          </button>
+        </div>
+      }
+    </div>
+
+    <div class="card p-5">
+      @if (!editing()) {
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p class="text-[var(--color-text-muted)]">First name</p>
+            <p class="font-medium mt-0.5">{{ u.firstName }}</p>
+          </div>
+          <div>
+            <p class="text-[var(--color-text-muted)]">Last name</p>
+            <p class="font-medium mt-0.5">{{ u.lastName || '—' }}</p>
+          </div>
+          <div>
+            <p class="text-[var(--color-text-muted)]">Email</p>
+            <p class="font-medium mt-0.5">{{ u.email }}</p>
+          </div>
+          <div>
+            <p class="text-[var(--color-text-muted)]">Phone</p>
+            <p class="font-medium mt-0.5">{{ u.phone || '—' }}</p>
+          </div>
+          <div>
+            <p class="text-[var(--color-text-muted)]">Role</p>
+            <p class="font-medium mt-0.5 capitalize">{{ u.role }}</p>
+          </div>
+          <div>
+            <p class="text-[var(--color-text-muted)]">Status</p>
+            <p class="mt-0.5">
+              <span
+                [class]="
+                  u.status === 'active'
+                    ? 'badge-success'
+                    : 'badge bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]'
+                "
+              >
+                {{ u.status }}
+              </span>
+            </p>
+          </div>
+          @if (u.createdAt) {
+            <div>
+              <p class="text-[var(--color-text-muted)]">Created</p>
+              <p class="font-medium mt-0.5">{{ u.createdAt | slice: 0 : 10 }}</p>
+            </div>
+          }
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="save()" class="space-y-4" novalidate>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="firstName">First name</label>
+              <input id="firstName" class="input" formControlName="firstName" />
+              @if (form.controls.firstName.invalid && form.controls.firstName.touched) {
+                <p class="field-error">First name is required.</p>
+              }
+            </div>
+            <div>
+              <label class="label" for="lastName">Last name</label>
+              <input id="lastName" class="input" formControlName="lastName" />
+            </div>
+          </div>
+
+          <div>
+            <label class="label" for="email">Email</label>
+            <input id="email" type="email" class="input" formControlName="email" />
+            @if (form.controls.email.invalid && form.controls.email.touched) {
+              <p class="field-error">Enter a valid email address.</p>
+            }
+          </div>
+
+          <div>
+            <label class="label" for="phone">Phone</label>
+            <input id="phone" class="input" formControlName="phone" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="role">Role</label>
+              <select id="role" class="input" formControlName="role">
+                <option value="user">User</option>
+                <option value="vendor">Vendor</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div>
+              <label class="label" for="status">Status</label>
+              <select id="status" class="input" formControlName="status">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="blocked">Blocked</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 pt-2">
+            <button type="submit" class="btn-primary" [disabled]="saving()">
+              {{ saving() ? 'Saving…' : 'Save changes' }}
+            </button>
+            <button type="button" class="btn-ghost" (click)="cancelEdit()">Cancel</button>
+          </div>
+        </form>
+      }
+    </div>
+  }
+</div>

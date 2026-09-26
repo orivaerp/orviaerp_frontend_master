@@ -1,0 +1,69 @@
+<div class="p-6 max-w-6xl mx-auto space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold">Products</h1>
+      <p class="text-sm text-[var(--color-text-muted)] mt-1">Services and products offered across all categories.</p>
+    </div>
+    <a routerLink="/dashboard/products/new" class="btn-primary">
+      <app-icon name="plus" [size]="16" />
+      New product
+    </a>
+  </div>
+
+  @if (loading()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Loading products…</div>
+  } @else if (errorMessage()) {
+    <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+      {{ errorMessage() }}
+    </div>
+  } @else if (products().length === 0) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">No products yet.</div>
+  } @else {
+    <div class="card overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-text-muted)]">
+            <th class="px-5 py-3 font-medium">Name</th>
+            <th class="px-5 py-3 font-medium">Category</th>
+            <th class="px-5 py-3 font-medium">Price</th>
+            <th class="px-5 py-3 font-medium">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[var(--color-border)]">
+          @for (product of products(); track product._id) {
+            <tr class="hover:bg-[var(--color-surface-alt)]">
+              <td class="px-5 py-3 font-medium">
+                <a [routerLink]="['/dashboard/products', product._id]" class="hover:text-[var(--color-primary-600)] hover:underline">
+                  {{ product.name }}
+                  @if (product.code) {
+                    <span class="ml-1.5 font-normal text-[var(--color-text-subtle)]" style="font-size: 70%">{{ product.code }}</span>
+                  }
+                </a>
+              </td>
+              <td class="px-5 py-3 text-[var(--color-text-muted)]">
+                {{ categoryName(product) }}
+                @if (subCategoryNames(product); as subNames) {
+                  @if (subNames) {
+                    <p class="text-xs text-[var(--color-text-subtle)] mt-0.5">{{ subNames }}</p>
+                  }
+                }
+              </td>
+              <td class="px-5 py-3 text-[var(--color-text-muted)]">{{ displayPrice(product) }}</td>
+              <td class="px-5 py-3">
+                <span
+                  [class]="
+                    product.status === 'published'
+                      ? 'badge-success'
+                      : 'badge bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]'
+                  "
+                >
+                  {{ product.status }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

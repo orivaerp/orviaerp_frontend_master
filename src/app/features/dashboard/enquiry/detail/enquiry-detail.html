@@ -1,0 +1,300 @@
+<div class="p-6 max-w-2xl mx-auto space-y-6">
+  <a routerLink="/dashboard/enquiries" class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+    ← Back to enquiries
+  </a>
+
+  @if (loading()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Loading enquiry…</div>
+  } @else if (notFound()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Enquiry not found.</div>
+  } @else if (enquiry(); as e) {
+    @if (errorMessage()) {
+      <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-semibold">{{ e.name }}</h1>
+        <p class="text-sm text-[var(--color-text-muted)]">{{ e.phone }} @if (e.email) { · {{ e.email }} }</p>
+      </div>
+      @if (!editing()) {
+        <div class="flex items-center gap-2">
+          <button type="button" class="btn-outline" (click)="startEdit()">Edit</button>
+          <button
+            type="button"
+            class="btn bg-[var(--color-danger-soft)] text-[var(--color-danger)] hover:bg-red-100"
+            [disabled]="deleting()"
+            (click)="remove()"
+          >
+            {{ deleting() ? 'Deleting…' : 'Delete' }}
+          </button>
+        </div>
+      }
+    </div>
+
+    <div class="card p-5 space-y-4">
+      <div class="flex flex-wrap items-center gap-2">
+        @for (s of statuses; track s) {
+          <button
+            type="button"
+            class="px-3 py-1.5 rounded-full text-xs font-medium border disabled:opacity-50"
+            [class]="
+              e.status === s
+                ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)]'
+                : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-alt)]'
+            "
+            [disabled]="updatingStatus()"
+            (click)="setStatus(s)"
+          >
+            {{ label(s) }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (!editing()) {
+      <div class="card p-5 space-y-4">
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          @if (productName(e); as pn) {
+            <div>
+              <p class="text-[var(--color-text-muted)]">Product</p>
+              <p class="font-medium mt-0.5">{{ pn }}</p>
+            </div>
+          }
+          @if (e.subject) {
+            <div>
+              <p class="text-[var(--color-text-muted)]">Subject</p>
+              <p class="font-medium mt-0.5">{{ e.subject }}</p>
+            </div>
+          }
+          <div>
+            <p class="text-[var(--color-text-muted)]">Source</p>
+            <p class="font-medium mt-0.5">{{ e.source ? label(e.source) : '—' }}</p>
+          </div>
+          <div>
+            <p class="text-[var(--color-text-muted)]">Received</p>
+            <p class="font-medium mt-0.5">{{ e.createdAt | slice: 0 : 10 }}</p>
+          </div>
+        </div>
+
+        @if (e.message) {
+          <div>
+            <p class="text-[var(--color-text-muted)] text-sm mb-1">Message</p>
+            <p class="text-sm whitespace-pre-line">{{ e.message }}</p>
+          </div>
+        }
+      </div>
+
+      @if (hasBusinessDetails(e)) {
+        <div class="card p-5 space-y-4">
+          <h2 class="font-semibold text-sm">Business details</h2>
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            @if (e.category) {
+              <div>
+                <p class="text-[var(--color-text-muted)]">Category</p>
+                <p class="font-medium mt-0.5">{{ label(e.category) }}</p>
+              </div>
+            }
+            @if (e.subCategory) {
+              <div>
+                <p class="text-[var(--color-text-muted)]">Sub-category</p>
+                <p class="font-medium mt-0.5">{{ e.subCategory }}</p>
+              </div>
+            }
+            @if (e.firmName) {
+              <div>
+                <p class="text-[var(--color-text-muted)]">Firm name</p>
+                <p class="font-medium mt-0.5">{{ e.firmName }}</p>
+              </div>
+            }
+            @if (e.website) {
+              <div>
+                <p class="text-[var(--color-text-muted)]">Website</p>
+                <a [href]="e.website" target="_blank" rel="noopener" class="font-medium mt-0.5 block text-[var(--color-primary-600)] hover:underline truncate">
+                  {{ e.website }}
+                </a>
+              </div>
+            }
+            @if (e.city) {
+              <div>
+                <p class="text-[var(--color-text-muted)]">City</p>
+                <p class="font-medium mt-0.5">{{ e.city }}</p>
+              </div>
+            }
+            @if (e.state) {
+              <div>
+                <p class="text-[var(--color-text-muted)]">State</p>
+                <p class="font-medium mt-0.5">{{ e.state }}</p>
+              </div>
+            }
+            @if (e.address) {
+              <div class="col-span-2">
+                <p class="text-[var(--color-text-muted)]">Address</p>
+                <p class="font-medium mt-0.5">{{ e.address }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="save()" novalidate class="space-y-6">
+        <div class="card p-5 space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="edit-name">Name</label>
+              <input id="edit-name" class="input" formControlName="name" />
+              @if (form.controls.name.invalid && form.controls.name.touched) {
+                <p class="field-error">Name needs at least 2 characters.</p>
+              }
+            </div>
+            <div>
+              <label class="label" for="edit-phone">Phone</label>
+              <input id="edit-phone" class="input" formControlName="phone" />
+              @if (form.controls.phone.invalid && form.controls.phone.touched) {
+                <p class="field-error">Phone number is required.</p>
+              }
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="edit-email">Email <span class="text-[var(--color-text-subtle)] font-normal">(optional)</span></label>
+              <input id="edit-email" type="email" class="input" formControlName="email" />
+              @if (form.controls.email.invalid && form.controls.email.touched) {
+                <p class="field-error">Enter a valid email address.</p>
+              }
+            </div>
+            <div>
+              <label class="label" for="edit-product">Product / service</label>
+              <select id="edit-product" class="input" formControlName="product">
+                <option value="">— None —</option>
+                @for (p of products(); track p._id) {
+                  <option [value]="p._id">{{ p.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="label" for="edit-subject">Subject</label>
+            <input id="edit-subject" class="input" formControlName="subject" />
+          </div>
+
+          <div>
+            <label class="label" for="edit-message">Message <span class="text-[var(--color-text-subtle)] font-normal">(optional)</span></label>
+            <textarea id="edit-message" class="input" rows="4" formControlName="message"></textarea>
+            @if (form.controls.message.invalid && form.controls.message.touched) {
+              <p class="field-error">Message needs at least 5 characters.</p>
+            }
+          </div>
+
+          <div>
+            <label class="label" for="edit-source">Source</label>
+            <select id="edit-source" class="input" formControlName="source">
+              @for (s of sources; track s) {
+                <option [value]="s">{{ label(s) }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="card p-5 space-y-4">
+          <div>
+            <h2 class="font-semibold">Lead details</h2>
+            <p class="text-xs text-[var(--color-text-muted)] mt-0.5">Optional context about the business this lead is for.</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="edit-category">Category</label>
+              <select id="edit-category" class="input" formControlName="category">
+                <option value="">— None —</option>
+                @for (c of categories; track c) {
+                  <option [value]="c">{{ label(c) }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="label" for="edit-subCategory">Sub-category</label>
+              <input id="edit-subCategory" class="input" formControlName="subCategory" list="editSubCategorySuggestions" />
+              <datalist id="editSubCategorySuggestions">
+                @for (s of subCategorySuggestions(); track s) {
+                  <option [value]="s"></option>
+                }
+              </datalist>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="edit-firmName">Firm name</label>
+              <input id="edit-firmName" class="input" formControlName="firmName" />
+            </div>
+            <div>
+              <label class="label" for="edit-website">Website</label>
+              <input id="edit-website" class="input" formControlName="website" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="edit-city">City</label>
+              <input id="edit-city" class="input" formControlName="city" />
+            </div>
+            <div>
+              <label class="label" for="edit-state">State</label>
+              <input id="edit-state" class="input" formControlName="state" />
+            </div>
+          </div>
+
+          <div>
+            <label class="label" for="edit-address">Address</label>
+            <textarea id="edit-address" class="input" rows="2" formControlName="address"></textarea>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button type="submit" class="btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Saving…' : 'Save changes' }}
+          </button>
+          <button type="button" class="btn-ghost" (click)="cancelEdit()">Cancel</button>
+        </div>
+      </form>
+    }
+
+    <div class="card p-5 space-y-4">
+      <h2 class="font-semibold text-sm">Internal notes</h2>
+
+      @if (e.notes.length === 0) {
+        <p class="text-sm text-[var(--color-text-muted)]">No notes yet.</p>
+      } @else {
+        <div class="space-y-3">
+          @for (note of e.notes; track $index) {
+            <div class="rounded-[var(--radius-md)] bg-[var(--color-surface-alt)] px-3.5 py-2.5">
+              <p class="text-sm">{{ note.text }}</p>
+              <p class="text-xs text-[var(--color-text-subtle)] mt-1">
+                {{ noteAuthor(note) }} · {{ note.createdAt | slice: 0 : 10 }}
+              </p>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="flex items-start gap-2">
+        <textarea
+          class="input"
+          rows="2"
+          placeholder="Add an internal note…"
+          [ngModel]="noteText()"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="noteText.set($event)"
+        ></textarea>
+        <button type="button" class="btn-primary shrink-0" [disabled]="addingNote() || !noteText().trim()" (click)="addNote()">
+          {{ addingNote() ? 'Adding…' : 'Add' }}
+        </button>
+      </div>
+    </div>
+  }
+</div>

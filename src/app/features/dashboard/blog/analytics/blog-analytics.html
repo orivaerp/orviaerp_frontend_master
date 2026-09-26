@@ -1,0 +1,72 @@
+<div class="p-6 max-w-6xl mx-auto space-y-6">
+  <h1 class="text-2xl font-semibold">Blog analytics</h1>
+
+  @if (loading()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Loading…</div>
+  } @else if (errorMessage()) {
+    <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+      {{ errorMessage() }}
+    </div>
+  } @else {
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="card p-5">
+        <p class="text-xs text-[var(--color-text-muted)]">Total posts</p>
+        <p class="text-2xl font-semibold mt-1">{{ totalBlogs() }}</p>
+      </div>
+      <div class="card p-5">
+        <p class="text-xs text-[var(--color-text-muted)]">Published</p>
+        <p class="text-2xl font-semibold mt-1">{{ publishedCount() }}</p>
+      </div>
+      <div class="card p-5">
+        <p class="text-xs text-[var(--color-text-muted)]">Drafts</p>
+        <p class="text-2xl font-semibold mt-1">{{ draftCount() }}</p>
+      </div>
+      <div class="card p-5">
+        <p class="text-xs text-[var(--color-text-muted)]">Total views</p>
+        <p class="text-2xl font-semibold mt-1">{{ totalViews() }}</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="card p-5">
+        <h2 class="font-semibold mb-4">Top posts by views</h2>
+        @if (topByViews().length === 0) {
+          <p class="text-sm text-[var(--color-text-muted)]">No posts yet.</p>
+        } @else {
+          <div class="divide-y divide-[var(--color-border)]">
+            @for (blog of topByViews(); track blog._id) {
+              <div class="flex items-center justify-between py-2.5">
+                <span class="text-sm truncate pr-3">{{ blog.title }}</span>
+                <span class="text-sm font-medium text-[var(--color-text-muted)] shrink-0">{{ blog.views }} views</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="card p-5">
+        <h2 class="font-semibold mb-4">Posts by category</h2>
+        @if (categoryCounts().length === 0) {
+          <p class="text-sm text-[var(--color-text-muted)]">No posts yet.</p>
+        } @else {
+          <div class="space-y-3">
+            @for (item of categoryCounts(); track item.category) {
+              <div>
+                <div class="flex items-center justify-between text-sm mb-1">
+                  <span>{{ item.category }}</span>
+                  <span class="text-[var(--color-text-muted)]">{{ item.count }}</span>
+                </div>
+                <div class="h-1.5 rounded-full bg-[var(--color-surface-muted)] overflow-hidden">
+                  <div
+                    class="h-full bg-[var(--color-primary-500)]"
+                    [style.width.%]="totalBlogs() ? (item.count / totalBlogs()) * 100 : 0"
+                  ></div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

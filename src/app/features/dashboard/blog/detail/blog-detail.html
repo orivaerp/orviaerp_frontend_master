@@ -1,0 +1,83 @@
+<div class="p-6 max-w-3xl mx-auto space-y-6">
+  <a routerLink="/dashboard/blog" class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+    ← Back to blogs
+  </a>
+
+  @if (loading()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Loading post…</div>
+  } @else if (notFound()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Post not found.</div>
+  } @else if (blog(); as b) {
+    @if (errorMessage()) {
+      <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <article class="card overflow-hidden">
+      @if (b.coverImage) {
+        <img [src]="b.coverImage" alt="" class="w-full h-56 object-cover bg-[var(--color-surface-muted)]" />
+      }
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+            @if (b.category) {
+              <span class="badge bg-[var(--color-primary-50)] text-[var(--color-primary-700)]">{{ b.category }}</span>
+            }
+            <span
+              [class]="
+                b.status === 'published'
+                  ? 'badge-success'
+                  : 'badge bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]'
+              "
+            >
+              {{ b.status }}
+            </span>
+            <span>{{ b.views }} views</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a [routerLink]="['/dashboard/blog', b._id, 'edit']" class="btn-outline">
+              <app-icon name="settings" [size]="15" />
+              Edit
+            </a>
+            <button
+              type="button"
+              class="btn bg-[var(--color-danger-soft)] text-[var(--color-danger)] hover:bg-red-100"
+              [disabled]="deleting()"
+              (click)="remove()"
+            >
+              {{ deleting() ? 'Deleting…' : 'Delete' }}
+            </button>
+          </div>
+        </div>
+
+        <h1 class="text-2xl font-semibold leading-snug">{{ b.title }}</h1>
+
+        @if (b.excerpt) {
+          <p class="text-sm text-[var(--color-text-muted)]">{{ b.excerpt }}</p>
+        }
+
+        <div class="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+          <div class="h-6 w-6 rounded-full bg-[var(--color-primary-400)] text-white flex items-center justify-center text-xs font-semibold">
+            {{ authorName(b).charAt(0) || '?' }}
+          </div>
+          {{ authorName(b) }}
+          @if (b.publishedAt) {
+            <span class="text-[var(--color-text-subtle)]">· {{ b.publishedAt | slice: 0 : 10 }}</span>
+          }
+        </div>
+
+        @if (b.tags && b.tags.length) {
+          <div class="flex flex-wrap gap-1.5">
+            @for (tag of b.tags; track tag) {
+              <span class="badge bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]">#{{ tag }}</span>
+            }
+          </div>
+        }
+
+        <div class="prose-preview text-sm leading-relaxed" [innerHTML]="b.content"></div>
+      </div>
+    </article>
+  }
+</div>

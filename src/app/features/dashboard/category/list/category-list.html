@@ -1,0 +1,81 @@
+<div class="p-6 max-w-5xl mx-auto space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold">Categories</h1>
+      <p class="text-sm text-[var(--color-text-muted)] mt-1">Product/service categories, with optional sub and sub-sub levels.</p>
+    </div>
+    <a routerLink="/dashboard/categories/new" class="btn-primary">
+      <app-icon name="plus" [size]="16" />
+      New category
+    </a>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Loading categories…</div>
+  } @else if (categories().length === 0) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">No categories yet.</div>
+  } @else {
+    <div class="card overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-text-muted)]">
+            <th class="px-5 py-3 font-medium">Name</th>
+            <th class="px-5 py-3 font-medium">Level</th>
+            <th class="px-5 py-3 font-medium">Parent</th>
+            <th class="px-5 py-3 font-medium">Status</th>
+            <th class="px-5 py-3 font-medium text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[var(--color-border)]">
+          @for (category of categories(); track category._id) {
+            <tr class="hover:bg-[var(--color-surface-alt)]">
+              <td class="px-5 py-3 font-medium">
+                <a
+                  [routerLink]="['/dashboard/categories', category._id]"
+                  [style.padding-left.px]="category.level * 16"
+                  class="hover:text-[var(--color-primary-600)] hover:underline"
+                >
+                  {{ category.name }}
+                </a>
+              </td>
+              <td class="px-5 py-3 text-[var(--color-text-muted)]">{{ category.level }}</td>
+              <td class="px-5 py-3 text-[var(--color-text-muted)]">{{ parentName(category) }}</td>
+              <td class="px-5 py-3">
+                <span
+                  [class]="
+                    category.isActive
+                      ? 'badge-success'
+                      : 'badge bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]'
+                  "
+                >
+                  {{ category.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="px-5 py-3 text-right">
+                <div class="flex items-center justify-end gap-3">
+                  <a [routerLink]="['/dashboard/categories', category._id]" class="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+                    Edit
+                  </a>
+                  <button
+                    type="button"
+                    class="text-[var(--color-danger)] hover:underline disabled:opacity-50"
+                    [disabled]="deletingId() === category._id"
+                    (click)="remove(category)"
+                  >
+                    {{ deletingId() === category._id ? 'Deleting…' : 'Delete' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

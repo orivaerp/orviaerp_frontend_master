@@ -1,0 +1,124 @@
+<div class="h-screen flex flex-col bg-[var(--color-surface-alt)]">
+  <!-- Top header -->
+  <header class="h-14 shrink-0 flex items-center gap-4 bg-[var(--color-ink-900)] text-white px-4">
+    <div class="flex items-center gap-2.5">
+      <div class="h-7 w-7 rounded-[var(--radius-sm)] bg-[var(--color-primary-500)] flex items-center justify-center text-xs font-bold">
+        O
+      </div>
+      <span class="text-sm font-semibold tracking-tight hidden sm:inline">OERP</span>
+    </div>
+
+    <div class="flex-1"></div>
+
+    <button class="p-2 rounded-full hover:bg-white/10 text-white/80" aria-label="Search">
+      <app-icon name="search" [size]="18" />
+    </button>
+
+    <div class="relative">
+      <button
+        class="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 hover:bg-white/10"
+        (click)="userMenuOpen.set(!userMenuOpen())"
+      >
+        <div class="h-7 w-7 rounded-full bg-[var(--color-primary-400)] flex items-center justify-center text-xs font-semibold">
+          {{ (authService.currentUser()?.firstName || '?').charAt(0) | uppercase }}
+        </div>
+        <app-icon name="chevron-down" [size]="14" />
+      </button>
+
+      @if (userMenuOpen()) {
+        <div
+          class="absolute right-0 mt-2 w-56 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white text-[var(--color-text)] shadow-[var(--shadow-popover)] py-2 z-20"
+        >
+          <div class="px-3.5 py-2 border-b border-[var(--color-border)]">
+            <p class="text-sm font-medium truncate">
+              {{ authService.currentUser()?.firstName }} {{ authService.currentUser()?.lastName }}
+            </p>
+            <p class="text-xs text-[var(--color-text-muted)] truncate">{{ authService.currentUser()?.email }}</p>
+          </div>
+          <a
+            routerLink="/dashboard/settings"
+            class="flex items-center gap-2 px-3.5 py-2 text-sm hover:bg-[var(--color-surface-alt)]"
+            (click)="userMenuOpen.set(false)"
+          >
+            <app-icon name="settings" [size]="16" />
+            Account settings
+          </a>
+          <button
+            class="w-full flex items-center gap-2 px-3.5 py-2 text-sm text-[var(--color-danger)] hover:bg-[var(--color-danger-soft)]"
+            (click)="logout()"
+          >
+            <app-icon name="logout" [size]="16" />
+            Log out
+          </button>
+        </div>
+      }
+    </div>
+  </header>
+
+  <div class="flex-1 flex min-h-0">
+    <!-- Icon rail -->
+    <nav class="w-[72px] shrink-0 bg-[var(--color-ink-900)] text-white/70 flex flex-col items-center gap-1 py-4">
+      @for (item of railItems; track item.label) {
+        <button
+          class="w-14 flex flex-col items-center gap-1 rounded-[var(--radius-md)] py-2.5 text-[10px] leading-tight transition-colors"
+          [class.bg-white/10]="activeSection() === item.section"
+          [class.text-white]="activeSection() === item.section"
+          [class.hover:bg-white/10]="activeSection() !== item.section"
+          [class.hover:text-white]="activeSection() !== item.section"
+          [title]="item.label"
+          (click)="selectSection(item)"
+        >
+          <app-icon [name]="item.icon" [size]="19" />
+          <span class="text-center">{{ item.label }}</span>
+        </button>
+      }
+    </nav>
+
+    <!-- Secondary sidebar -->
+    <aside class="w-[260px] shrink-0 bg-white border-r border-[var(--color-border)] flex flex-col">
+      <div class="p-4 border-b border-[var(--color-border)]">
+        <div class="relative">
+          <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-subtle)]">
+            <app-icon name="search" [size]="15" />
+          </span>
+          <input
+            type="text"
+            placeholder="Search"
+            class="input !pl-8 !py-2"
+          />
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto py-2">
+        @for (item of navItems(); track item.label) {
+          @if (item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="bg-[var(--color-primary-50)] text-[var(--color-primary-700)] font-medium"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]"
+            >
+              <app-icon [name]="item.icon" [size]="17" />
+              {{ item.label }}
+            </a>
+          } @else {
+            <button
+              class="w-full flex items-center justify-between px-4 py-2.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]"
+            >
+              <span class="flex items-center gap-3">
+                <app-icon [name]="item.icon" [size]="17" />
+                {{ item.label }}
+              </span>
+              <app-icon name="chevron-down" [size]="14" class="-rotate-90 text-[var(--color-text-subtle)]" />
+            </button>
+          }
+        }
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 overflow-y-auto">
+      <router-outlet />
+    </main>
+  </div>
+</div>

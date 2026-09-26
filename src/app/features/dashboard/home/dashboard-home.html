@@ -1,0 +1,127 @@
+<div class="p-6 max-w-6xl mx-auto space-y-6">
+  <!-- Breadcrumb -->
+  <div class="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+    <app-icon name="home" [size]="14" />
+    <span>Websites</span>
+    <span>/</span>
+    <span class="text-[var(--color-text)] font-medium">admin.mypearlcraft.com</span>
+  </div>
+
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-semibold">Dashboard</h1>
+    <button class="btn-primary">Upgrade plan</button>
+  </div>
+
+  <!-- Site summary -->
+  <div class="card p-5 space-y-4">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-3">
+        <div class="h-11 w-11 rounded-[var(--radius-md)] bg-[var(--color-surface-alt)] flex items-center justify-center">
+          <app-icon name="window" [size]="20" />
+        </div>
+        <div>
+          <p class="font-medium flex items-center gap-1.5">
+            admin.mypearlcraft.com
+            <app-icon name="external" [size]="14" class="text-[var(--color-text-subtle)]" />
+          </p>
+          <p class="text-xs text-[var(--color-text-muted)]">Created: {{ today }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between rounded-[var(--radius-md)] bg-[var(--color-surface-alt)] px-4 py-3 flex-wrap gap-3">
+      <div class="flex items-center gap-2.5 text-sm">
+        <app-icon name="database" [size]="16" />
+        Transfer your domain to OERP
+      </div>
+      <button class="btn-primary">Transfer</button>
+    </div>
+
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="badge-success"><app-icon name="check" [size]="12" />Malware protected</span>
+      <span class="badge-success"><app-icon name="check" [size]="12" />SSL</span>
+      <span class="badge-success"><app-icon name="check" [size]="12" />CDN</span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Essentials -->
+    <div class="card p-5">
+      <h2 class="font-semibold mb-4">Essentials</h2>
+      <div class="divide-y divide-[var(--color-border)]">
+        <div class="flex items-center justify-between py-3">
+          <div class="flex items-center gap-3">
+            <app-icon name="database" [size]="18" />
+            <div>
+              <p class="text-sm font-medium">Database</p>
+              <p class="text-xs text-[var(--color-text-muted)]">Manage database</p>
+            </div>
+          </div>
+          <button class="btn-outline !px-3 !py-1.5 text-xs">Manage</button>
+        </div>
+        <div class="flex items-center justify-between py-3">
+          <div class="flex items-center gap-3">
+            <app-icon name="folder" [size]="18" />
+            <div>
+              <p class="text-sm font-medium">Backups</p>
+              <p class="text-xs text-[var(--color-text-muted)]">Restore or download</p>
+            </div>
+          </div>
+          <app-icon name="chevron-down" [size]="14" class="-rotate-90 text-[var(--color-text-subtle)]" />
+        </div>
+        <div class="flex items-center justify-between py-3">
+          <div class="flex items-center gap-3">
+            <app-icon name="shield" [size]="18" />
+            <div>
+              <p class="text-sm font-medium">Security</p>
+              <p class="text-xs text-[var(--color-text-muted)]">SSL, firewall &amp; access</p>
+            </div>
+          </div>
+          <app-icon name="chevron-down" [size]="14" class="-rotate-90 text-[var(--color-text-subtle)]" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance -->
+    <div class="card p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-semibold">Performance</h2>
+        <button class="btn-outline !px-3 !py-1.5 text-xs">Run speed test</button>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col items-center gap-2 rounded-[var(--radius-md)] border border-dashed border-[var(--color-border)] py-6">
+          <div class="h-12 w-12 rounded-full border-2 border-[var(--color-border)] flex items-center justify-center">
+            <app-icon name="gauge" [size]="20" class="text-[var(--color-text-subtle)]" />
+          </div>
+          <div class="text-center">
+            <p class="text-sm font-medium">Desktop</p>
+            <p class="text-xs text-[var(--color-text-muted)]">Not scanned yet</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-center gap-2 rounded-[var(--radius-md)] border border-dashed border-[var(--color-border)] py-6">
+          <div class="h-12 w-12 rounded-full border-2 border-[var(--color-border)] flex items-center justify-center">
+            <app-icon name="gauge" [size]="20" class="text-[var(--color-text-subtle)]" />
+          </div>
+          <div class="text-center">
+            <p class="text-sm font-medium">Mobile</p>
+            <p class="text-xs text-[var(--color-text-muted)]">Not scanned yet</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account -->
+  <div class="card p-5">
+    <h2 class="font-semibold mb-4">Account</h2>
+    <div class="flex items-center gap-4">
+      <div class="h-12 w-12 rounded-full bg-[var(--color-primary-400)] text-white flex items-center justify-center text-lg font-semibold">
+        {{ (authService.currentUser()?.firstName || '?').charAt(0) }}
+      </div>
+      <div>
+        <p class="font-medium">{{ authService.currentUser()?.firstName }} {{ authService.currentUser()?.lastName }}</p>
+        <p class="text-sm text-[var(--color-text-muted)]">{{ authService.currentUser()?.email }}</p>
+      </div>
+    </div>
+  </div>
+</div>

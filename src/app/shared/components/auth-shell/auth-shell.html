@@ -1,0 +1,41 @@
+<div class="min-h-screen w-full flex bg-[var(--color-surface-alt)]">
+  <!-- Brand panel -->
+  <aside
+    class="hidden lg:flex w-[38%] flex-col justify-between bg-[var(--color-ink-900)] text-white p-10 relative overflow-hidden"
+  >
+    <div
+      class="absolute -top-24 -right-24 h-72 w-72 rounded-full opacity-30 blur-3xl"
+      style="background: radial-gradient(circle, var(--color-primary-500), transparent 70%)"
+    ></div>
+
+    <div class="flex items-center gap-2.5 relative z-10">
+      <div class="h-9 w-9 rounded-[var(--radius-md)] bg-[var(--color-primary-500)] flex items-center justify-center font-bold">
+        O
+      </div>
+      <span class="text-lg font-semibold tracking-tight">OERP</span>
+    </div>
+
+    <div class="relative z-10 space-y-4">
+      <h2 class="text-3xl font-semibold leading-tight">Run your business from one dashboard.</h2>
+      <p class="text-sm text-white/60 max-w-sm">
+        Orders, inventory, customers and reports — all in one place, built for speed.
+      </p>
+    </div>
+
+    <p class="relative z-10 text-xs text-white/40">&copy; {{ year }} OERP. All rights reserved.</p>
+  </aside>
+
+  <!-- Form panel -->
+  <main class="flex-1 flex items-center justify-center p-6 sm:p-10">
+    <div class="w-full max-w-sm">
+      <div class="mb-8">
+        <h1 class="text-2xl font-semibold text-[var(--color-text)]">{{ title }}</h1>
+        @if (subtitle) {
+          <p class="mt-1.5 text-sm text-[var(--color-text-muted)]">{{ subtitle }}</p>
+        }
+      </div>
+
+      <ng-content />
+    </div>
+  </main>
+</div>

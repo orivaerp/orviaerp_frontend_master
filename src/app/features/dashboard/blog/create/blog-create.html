@@ -1,0 +1,189 @@
+<div class="p-6 max-w-3xl mx-auto space-y-6">
+  <div>
+    <a routerLink="/dashboard/blog" class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+      ← Back to blogs
+    </a>
+    <h1 class="text-2xl font-semibold mt-2">New post</h1>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="space-y-6">
+    <!-- Post content -->
+    <div class="card p-5 space-y-4">
+      <div>
+        <label class="label" for="title">Title</label>
+        <input id="title" class="input" formControlName="title" placeholder="How we shipped OERP v2" />
+        @if (form.controls.title.invalid && form.controls.title.touched) {
+          <p class="field-error">Title needs at least 3 characters.</p>
+        }
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="label" for="category">Category</label>
+          <input id="category" class="input" formControlName="category" placeholder="Product" />
+        </div>
+        <div>
+          <label class="label" for="tags">Tags</label>
+          <input id="tags" class="input" formControlName="tags" placeholder="angular, release" />
+        </div>
+      </div>
+
+      <div>
+        <label class="label" for="coverImage">Cover image URL</label>
+        <input id="coverImage" class="input" formControlName="coverImage" placeholder="https://…" />
+      </div>
+
+      <div>
+        <label class="label" for="excerpt">Excerpt</label>
+        <textarea
+          id="excerpt"
+          class="input"
+          rows="2"
+          formControlName="excerpt"
+          placeholder="One or two sentences shown in the blog list"
+        ></textarea>
+        @if (form.controls.excerpt.invalid && form.controls.excerpt.touched) {
+          <p class="field-error">Keep the excerpt under 280 characters.</p>
+        }
+      </div>
+
+      <div>
+        <label class="label">Content</label>
+        <quill-editor class="block" formControlName="content" [modules]="editorModules" placeholder="Write your post…" />
+        @if (form.controls.content.invalid && form.controls.content.touched) {
+          <p class="field-error">Post content can't be empty.</p>
+        }
+      </div>
+
+      <div>
+        <label class="label" for="status">Status</label>
+        <select id="status" class="input" formControlName="status">
+          <option value="draft">Draft</option>
+          <option value="published">Published</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Meta info -->
+    <div class="card p-5 space-y-4">
+      <div>
+        <h2 class="font-semibold">Meta info</h2>
+        <p class="text-xs text-[var(--color-text-muted)] mt-0.5">
+          Author and search-engine details for this post.
+        </p>
+      </div>
+
+      <div>
+        <p class="label !mb-1.5">Author</p>
+        <div class="flex items-center gap-2.5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3.5 py-2.5">
+          <div class="h-6 w-6 rounded-full bg-[var(--color-primary-400)] text-white flex items-center justify-center text-xs font-semibold">
+            {{ (authService.currentUser()?.firstName || '?').charAt(0) }}
+          </div>
+          <span class="text-sm">{{ authService.currentUser()?.firstName }} {{ authService.currentUser()?.lastName }}</span>
+          <span class="text-xs text-[var(--color-text-subtle)] ml-auto">Set from your account</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between">
+          <label class="label !mb-1.5" for="metaTitle">Meta title</label>
+          <span class="text-xs text-[var(--color-text-subtle)]">{{ (preview().metaTitle || '').length }}/70</span>
+        </div>
+        <input id="metaTitle" class="input" formControlName="metaTitle" placeholder="Defaults to the post title" />
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between">
+          <label class="label !mb-1.5" for="metaDescription">Meta description</label>
+          <span class="text-xs text-[var(--color-text-subtle)]">{{ (preview().metaDescription || '').length }}/160</span>
+        </div>
+        <textarea
+          id="metaDescription"
+          class="input"
+          rows="2"
+          formControlName="metaDescription"
+          placeholder="Shown in search results — defaults to the excerpt"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button type="submit" class="btn-primary" [disabled]="loading()">
+        {{ loading() ? 'Saving…' : preview().status === 'published' ? 'Publish' : 'Save draft' }}
+      </button>
+      <button type="button" class="btn-outline" (click)="openPreview()">
+        <app-icon name="external" [size]="15" />
+        Preview
+      </button>
+      <a routerLink="/dashboard/blog" class="btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+
+@if (previewOpen()) {
+  <div class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8" (click)="closePreview()">
+    <div class="w-full max-w-2xl" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-sm font-medium text-white">Preview</p>
+        <button type="button" class="btn-ghost !text-white hover:!bg-white/10" (click)="closePreview()">
+          <app-icon name="external" [size]="15" />
+          Close
+        </button>
+      </div>
+
+      <article class="card overflow-hidden">
+        @if (preview().coverImage) {
+          <img [src]="preview().coverImage" alt="" class="w-full h-56 object-cover bg-[var(--color-surface-muted)]" />
+        }
+        <div class="p-6 space-y-4">
+          <div class="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+            @if (preview().category) {
+              <span class="badge bg-[var(--color-primary-50)] text-[var(--color-primary-700)]">{{ preview().category }}</span>
+            }
+            <span>{{ preview().status === 'published' ? 'Published' : 'Draft' }}</span>
+          </div>
+
+          <h2 class="text-2xl font-semibold leading-snug">{{ preview().title || 'Untitled post' }}</h2>
+
+          @if (preview().excerpt) {
+            <p class="text-sm text-[var(--color-text-muted)]">{{ preview().excerpt }}</p>
+          }
+
+          <div class="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+            <div class="h-6 w-6 rounded-full bg-[var(--color-primary-400)] text-white flex items-center justify-center text-xs font-semibold">
+              {{ (authService.currentUser()?.firstName || '?').charAt(0) }}
+            </div>
+            {{ authService.currentUser()?.firstName }} {{ authService.currentUser()?.lastName }}
+          </div>
+
+          @if (previewTags().length) {
+            <div class="flex flex-wrap gap-1.5">
+              @for (tag of previewTags(); track tag) {
+                <span class="badge bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]">#{{ tag }}</span>
+              }
+            </div>
+          }
+
+          <div class="prose-preview text-sm leading-relaxed" [innerHTML]="previewContent()"></div>
+
+          <div class="border-t border-[var(--color-border)] pt-4 space-y-1.5">
+            <p class="text-xs font-medium uppercase tracking-wide text-[var(--color-text-subtle)]">Search result preview</p>
+            <p class="text-[color:#1a0dab] text-base leading-snug truncate">
+              {{ preview().metaTitle || preview().title || 'Untitled post' }}
+            </p>
+            <p class="text-xs text-[var(--color-success)]">yourdomain.com/blog/{{ slugify(preview().title) }}</p>
+            <p class="text-sm text-[var(--color-text-muted)] line-clamp-2">
+              {{ preview().metaDescription || preview().excerpt || 'No description yet.' }}
+            </p>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+}

@@ -1,0 +1,61 @@
+<div class="p-6 max-w-2xl mx-auto space-y-6">
+  <h1 class="text-2xl font-semibold">Account settings</h1>
+
+  <div class="card p-5 space-y-4">
+    <h2 class="font-semibold">Profile</h2>
+    <div class="grid grid-cols-2 gap-4 text-sm">
+      <div>
+        <p class="text-[var(--color-text-muted)]">Name</p>
+        <p class="font-medium">{{ authService.currentUser()?.firstName }} {{ authService.currentUser()?.lastName }}</p>
+      </div>
+      <div>
+        <p class="text-[var(--color-text-muted)]">Email</p>
+        <p class="font-medium">{{ authService.currentUser()?.email }}</p>
+      </div>
+      <div>
+        <p class="text-[var(--color-text-muted)]">Role</p>
+        <p class="font-medium capitalize">{{ authService.currentUser()?.role }}</p>
+      </div>
+      <div>
+        <p class="text-[var(--color-text-muted)]">Status</p>
+        <p class="font-medium capitalize">{{ authService.currentUser()?.status }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-5 space-y-4">
+    <h2 class="font-semibold">Change password</h2>
+
+    @if (success()) {
+      <div class="rounded-[var(--radius-md)] bg-[var(--color-success-soft)] px-3.5 py-2.5 text-sm text-[var(--color-success)]">
+        Password changed successfully.
+      </div>
+    }
+    @if (errorMessage()) {
+      <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4" novalidate>
+      <div>
+        <label class="label" for="currentPassword">Current password</label>
+        <input id="currentPassword" type="password" class="input" formControlName="currentPassword" autocomplete="current-password" />
+      </div>
+      <div>
+        <label class="label" for="newPassword">New password</label>
+        <input id="newPassword" type="password" class="input" formControlName="newPassword" autocomplete="new-password" />
+        @if (form.controls.newPassword.invalid && form.controls.newPassword.touched) {
+          <p class="field-error">Password must be at least 6 characters.</p>
+        }
+      </div>
+      <button type="submit" class="btn-primary" [disabled]="loading()">
+        @if (loading()) {
+          <span>Saving…</span>
+        } @else {
+          <span>Change password</span>
+        }
+      </button>
+    </form>
+  </div>
+</div>

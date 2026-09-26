@@ -1,0 +1,153 @@
+<div class="p-6 max-w-3xl mx-auto space-y-6">
+  <div>
+    <a [routerLink]="['/dashboard/products', productId]" class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+      ← Back to product
+    </a>
+    <h1 class="text-2xl font-semibold mt-2">Edit product</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Loading product…</div>
+  } @else if (notFound()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Product not found.</div>
+  } @else {
+    @if (errorMessage()) {
+      <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="space-y-6">
+      <div class="card p-5 space-y-4">
+        <div>
+          <label class="label" for="name">Name</label>
+          <input id="name" class="input" formControlName="name" />
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+            <p class="field-error">Name needs at least 2 characters.</p>
+          }
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="label" for="category">Category</label>
+            <select id="category" class="input" formControlName="category">
+              <option value="">Select…</option>
+              @for (c of topCategories(); track c._id) {
+                <option [value]="c._id">{{ c.name }}</option>
+              }
+            </select>
+            @if (form.controls.category.invalid && form.controls.category.touched) {
+              <p class="field-error">Category is required.</p>
+            }
+          </div>
+          <div>
+            <label class="label" for="subCategory">Sub-category</label>
+            <select id="subCategory" class="input" formControlName="subCategory" [disabled]="!subCategories().length">
+              <option value="">— None —</option>
+              @for (c of subCategories(); track c._id) {
+                <option [value]="c._id">{{ c.name }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="label" for="subSubCategory">Sub-sub-category</label>
+            <select id="subSubCategory" class="input" formControlName="subSubCategory" [disabled]="!subSubCategories().length">
+              <option value="">— None —</option>
+              @for (c of subSubCategories(); track c._id) {
+                <option [value]="c._id">{{ c.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="label" for="tags">Tags</label>
+          <input id="tags" class="input" formControlName="tags" placeholder="angular, ecommerce" />
+        </div>
+
+        <div>
+          <label class="label" for="shortDescription">Short description</label>
+          <textarea id="shortDescription" class="input" rows="2" formControlName="shortDescription"></textarea>
+        </div>
+
+        <div>
+          <label class="label" for="description">Description</label>
+          <textarea id="description" class="input" rows="5" formControlName="description"></textarea>
+        </div>
+
+        <div>
+          <label class="label" for="features">Features (comma separated)</label>
+          <input id="features" class="input" formControlName="features" />
+        </div>
+
+        <div>
+          <label class="label" for="deliverables">Deliverables (comma separated)</label>
+          <input id="deliverables" class="input" formControlName="deliverables" />
+        </div>
+      </div>
+
+      <div class="card p-5 space-y-4">
+        <h2 class="font-semibold">Pricing</h2>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="label" for="pricingType">Pricing type</label>
+            <select id="pricingType" class="input" formControlName="pricingType">
+              <option value="fixed">Fixed</option>
+              <option value="starting-from">Starting from</option>
+              <option value="custom-quote">Custom quote</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+          <div>
+            <label class="label" for="price">Price</label>
+            <input id="price" type="number" class="input" formControlName="price" />
+          </div>
+          <div>
+            <label class="label" for="currency">Currency</label>
+            <input id="currency" class="input" formControlName="currency" />
+          </div>
+        </div>
+        <div>
+          <label class="label" for="discount">Discount (%)</label>
+          <input id="discount" type="number" class="input" formControlName="discount" min="0" max="100" />
+        </div>
+      </div>
+
+      <div class="card p-5 space-y-4">
+        <h2 class="font-semibold">Media & status</h2>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="label" for="thumbnail">Thumbnail URL</label>
+            <input id="thumbnail" class="input" formControlName="thumbnail" />
+          </div>
+          <div>
+            <label class="label" for="demoUrl">Demo URL</label>
+            <input id="demoUrl" class="input" formControlName="demoUrl" />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-6">
+          <div class="flex-1">
+            <label class="label" for="status">Status</label>
+            <select id="status" class="input" formControlName="status">
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <label class="flex items-center gap-2 text-sm pt-5">
+            <input type="checkbox" formControlName="isFeatured" class="h-4 w-4" />
+            Featured
+          </label>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button type="submit" class="btn-primary" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save changes' }}
+        </button>
+        <a [routerLink]="['/dashboard/products', productId]" class="btn-ghost">Cancel</a>
+      </div>
+    </form>
+  }
+</div>

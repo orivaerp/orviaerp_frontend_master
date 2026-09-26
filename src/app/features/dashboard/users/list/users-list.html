@@ -1,0 +1,75 @@
+<div class="p-6 max-w-6xl mx-auto space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold">Users</h1>
+      <p class="text-sm text-[var(--color-text-muted)] mt-1">Everyone with access to this workspace.</p>
+    </div>
+    <a routerLink="/dashboard/users/new" class="btn-primary">
+      <app-icon name="plus" [size]="16" />
+      Add user
+    </a>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Loading users…</div>
+  } @else if (users().length === 0) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">No users yet.</div>
+  } @else {
+    <div class="card overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-text-muted)]">
+            <th class="px-5 py-3 font-medium">Name</th>
+            <th class="px-5 py-3 font-medium">Email</th>
+            <th class="px-5 py-3 font-medium">Role</th>
+            <th class="px-5 py-3 font-medium">Status</th>
+            <th class="px-5 py-3 font-medium text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[var(--color-border)]">
+          @for (user of users(); track user._id) {
+            <tr
+              class="hover:bg-[var(--color-surface-alt)] cursor-pointer"
+              [routerLink]="['/dashboard/users', user._id]"
+            >
+              <td class="px-5 py-3 font-medium">
+                {{ user.firstName }} {{ user.lastName }}
+                @if (user._id === authService.currentUser()?._id) {
+                  <span class="text-xs text-[var(--color-text-muted)]">(you)</span>
+                }
+              </td>
+              <td class="px-5 py-3 text-[var(--color-text-muted)]">{{ user.email }}</td>
+              <td class="px-5 py-3 capitalize">{{ user.role }}</td>
+              <td class="px-5 py-3">
+                <span
+                  [class]="
+                    user.status === 'active'
+                      ? 'badge-success'
+                      : 'badge bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]'
+                  "
+                >
+                  {{ user.status }}
+                </span>
+              </td>
+              <td class="px-5 py-3 text-right">
+                <button
+                  class="btn-ghost !px-2.5 !py-1.5 text-xs text-[var(--color-danger)] hover:bg-[var(--color-danger-soft)]"
+                  [disabled]="deletingId() === user._id"
+                  (click)="$event.stopPropagation(); remove(user)"
+                >
+                  {{ deletingId() === user._id ? 'Deleting…' : 'Delete' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

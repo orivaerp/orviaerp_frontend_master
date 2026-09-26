@@ -1,0 +1,150 @@
+<div class="p-6 max-w-2xl mx-auto space-y-6">
+  <div>
+    <a routerLink="/dashboard/enquiries" class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+      ← Back to enquiries
+    </a>
+    <h1 class="text-2xl font-semibold mt-2">Add lead</h1>
+    <p class="text-sm text-[var(--color-text-muted)] mt-1">Manually log a lead that came in outside the website form — a call, a walk-in, an event, etc.</p>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="space-y-6">
+    <div class="card p-5 space-y-4">
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="label" for="name">Name</label>
+        <input id="name" class="input" formControlName="name" placeholder="Jordan Smith" />
+        @if (form.controls.name.invalid && form.controls.name.touched) {
+          <p class="field-error">Name needs at least 2 characters.</p>
+        }
+      </div>
+      <div>
+        <label class="label" for="phone">Phone</label>
+        <input id="phone" class="input" formControlName="phone" placeholder="9876543210" />
+        @if (form.controls.phone.invalid && form.controls.phone.touched) {
+          <p class="field-error">Phone number is required.</p>
+        }
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="label" for="email">Email <span class="text-[var(--color-text-subtle)] font-normal">(optional)</span></label>
+        <input id="email" type="email" class="input" formControlName="email" placeholder="jordan@example.com" />
+        @if (form.controls.email.invalid && form.controls.email.touched) {
+          <p class="field-error">Enter a valid email address.</p>
+        }
+      </div>
+      <div>
+        <label class="label" for="product">Product / service</label>
+        <select id="product" class="input" formControlName="product">
+          <option value="">— None —</option>
+          @for (p of products(); track p._id) {
+            <option [value]="p._id">{{ p.name }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label class="label" for="subject">Subject</label>
+      <input id="subject" class="input" formControlName="subject" placeholder="What's this about?" />
+    </div>
+
+    <div>
+      <label class="label" for="message">Message <span class="text-[var(--color-text-subtle)] font-normal">(optional)</span></label>
+      <textarea id="message" class="input" rows="4" formControlName="message" placeholder="Notes from the conversation…"></textarea>
+      @if (form.controls.message.invalid && form.controls.message.touched) {
+        <p class="field-error">Message needs at least 5 characters.</p>
+      }
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="label" for="source">Source</label>
+        <select id="source" class="input" formControlName="source">
+          @for (s of sources; track s) {
+            <option [value]="s">{{ label(s) }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="label" for="status">Status</label>
+        <select id="status" class="input" formControlName="status">
+          @for (s of statuses; track s) {
+            <option [value]="s">{{ label(s) }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    </div>
+
+    <!-- Lead details (all optional) -->
+    <div class="card p-5 space-y-4">
+    <div>
+      <h2 class="font-semibold">Lead details</h2>
+      <p class="text-xs text-[var(--color-text-muted)] mt-0.5">Optional context about the business this lead is for.</p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="label" for="category">Category</label>
+        <select id="category" class="input" formControlName="category">
+          <option value="">— None —</option>
+          @for (c of categories; track c) {
+            <option [value]="c">{{ label(c) }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="label" for="subCategory">Sub-category</label>
+        <input id="subCategory" class="input" formControlName="subCategory" list="subCategorySuggestions" placeholder="e.g. Clinic" />
+        <datalist id="subCategorySuggestions">
+          @for (s of subCategorySuggestions(); track s) {
+            <option [value]="s"></option>
+          }
+        </datalist>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="label" for="firmName">Firm name</label>
+        <input id="firmName" class="input" formControlName="firmName" placeholder="Business / firm name" />
+      </div>
+      <div>
+        <label class="label" for="website">Website</label>
+        <input id="website" class="input" formControlName="website" placeholder="https://…" />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="label" for="city">City</label>
+        <input id="city" class="input" formControlName="city" />
+      </div>
+      <div>
+        <label class="label" for="state">State</label>
+        <input id="state" class="input" formControlName="state" />
+      </div>
+    </div>
+
+    <div>
+      <label class="label" for="address">Address</label>
+      <textarea id="address" class="input" rows="2" formControlName="address"></textarea>
+    </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button type="submit" class="btn-primary" [disabled]="loading()">
+        {{ loading() ? 'Saving…' : 'Add lead' }}
+      </button>
+      <a routerLink="/dashboard/enquiries" class="btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>

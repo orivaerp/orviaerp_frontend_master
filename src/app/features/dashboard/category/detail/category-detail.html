@@ -1,0 +1,131 @@
+<div class="p-6 max-w-2xl mx-auto space-y-6">
+  <a routerLink="/dashboard/categories" class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+    ← Back to categories
+  </a>
+
+  @if (loading()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Loading category…</div>
+  } @else if (notFound()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Category not found.</div>
+  } @else if (category(); as c) {
+    @if (errorMessage()) {
+      <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-semibold">{{ c.name }}</h1>
+        <p class="text-sm text-[var(--color-text-muted)]">{{ c.path }}</p>
+      </div>
+
+      @if (!editing()) {
+        <div class="flex items-center gap-2">
+          <button type="button" class="btn-outline" (click)="startEdit()">
+            <app-icon name="settings" [size]="15" />
+            Edit
+          </button>
+          <button
+            type="button"
+            class="btn bg-[var(--color-danger-soft)] text-[var(--color-danger)] hover:bg-red-100"
+            [disabled]="deleting()"
+            (click)="remove()"
+          >
+            {{ deleting() ? 'Deleting…' : 'Delete' }}
+          </button>
+        </div>
+      }
+    </div>
+
+    <div class="card p-5">
+      @if (!editing()) {
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p class="text-[var(--color-text-muted)]">Parent</p>
+            <p class="font-medium mt-0.5">{{ parentName(c) }}</p>
+          </div>
+          <div>
+            <p class="text-[var(--color-text-muted)]">Level</p>
+            <p class="font-medium mt-0.5">{{ c.level }}</p>
+          </div>
+          <div class="col-span-2">
+            <p class="text-[var(--color-text-muted)]">Description</p>
+            <p class="font-medium mt-0.5">{{ c.description || '—' }}</p>
+          </div>
+          <div>
+            <p class="text-[var(--color-text-muted)]">Status</p>
+            <p class="mt-0.5">
+              <span
+                [class]="
+                  c.isActive
+                    ? 'badge-success'
+                    : 'badge bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]'
+                "
+              >
+                {{ c.isActive ? 'Active' : 'Inactive' }}
+              </span>
+              @if (c.isFeatured) {
+                <span class="badge bg-[var(--color-primary-50)] text-[var(--color-primary-700)] ml-1.5">Featured</span>
+              }
+            </p>
+          </div>
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="save()" class="space-y-4" novalidate>
+          <div>
+            <label class="label" for="name">Name</label>
+            <input id="name" class="input" formControlName="name" />
+            @if (form.controls.name.invalid && form.controls.name.touched) {
+              <p class="field-error">Name needs at least 2 characters.</p>
+            }
+          </div>
+
+          <div>
+            <label class="label" for="parent">Parent category</label>
+            <select id="parent" class="input" formControlName="parent">
+              <option value="">— None (top-level category) —</option>
+              @for (parent of parents(); track parent._id) {
+                <option [value]="parent._id">{{ parent.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label class="label" for="description">Description</label>
+            <textarea id="description" class="input" rows="3" formControlName="description"></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="icon">Icon</label>
+              <input id="icon" class="input" formControlName="icon" />
+            </div>
+            <div>
+              <label class="label" for="image">Image URL</label>
+              <input id="image" class="input" formControlName="image" />
+            </div>
+          </div>
+
+          <div class="flex items-center gap-6">
+            <label class="flex items-center gap-2 text-sm">
+              <input type="checkbox" formControlName="isActive" class="h-4 w-4" />
+              Active
+            </label>
+            <label class="flex items-center gap-2 text-sm">
+              <input type="checkbox" formControlName="isFeatured" class="h-4 w-4" />
+              Featured
+            </label>
+          </div>
+
+          <div class="flex items-center gap-3 pt-2">
+            <button type="submit" class="btn-primary" [disabled]="saving()">
+              {{ saving() ? 'Saving…' : 'Save changes' }}
+            </button>
+            <button type="button" class="btn-ghost" (click)="cancelEdit()">Cancel</button>
+          </div>
+        </form>
+      }
+    </div>
+  }
+</div>
