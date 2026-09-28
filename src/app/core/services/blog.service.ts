@@ -9,7 +9,6 @@ export interface CreateBlogPayload {
   title: string;
   content: string;
   excerpt?: string;
-  coverImage?: string;
   category?: string;
   tags?: string[];
   status?: BlogStatus;
@@ -43,5 +42,16 @@ export class BlogService {
 
   delete(id: string): Observable<ApiSuccess<null>> {
     return this.http.delete<ApiSuccess<null>>(`${this.baseUrl}/${id}`);
+  }
+
+  /** Uploads (or replaces) a post's cover image. The backend deletes the previous S3 object, if any. */
+  uploadCoverImage(id: string, file: File): Observable<ApiSuccess<Blog>> {
+    const formData = new FormData();
+    formData.append('coverImage', file);
+    return this.http.put<ApiSuccess<Blog>>(`${this.baseUrl}/${id}/cover-image`, formData);
+  }
+
+  deleteCoverImage(id: string): Observable<ApiSuccess<Blog>> {
+    return this.http.delete<ApiSuccess<Blog>>(`${this.baseUrl}/${id}/cover-image`);
   }
 }

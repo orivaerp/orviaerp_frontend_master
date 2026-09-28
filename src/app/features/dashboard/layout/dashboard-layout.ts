@@ -6,7 +6,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../../core/services/auth.service';
 import { Icon } from '../../../shared/components/icon/icon';
 
-type Section = 'site' | 'blog' | 'users' | 'products' | 'enquiries';
+type Section = 'site' | 'blog' | 'users' | 'products' | 'enquiries' | 'contacts';
 
 interface RailItem {
   label: string;
@@ -61,11 +61,17 @@ const ENQUIRIES_NAV: NavItem[] = [
   { label: 'Settings', route: '/dashboard/settings', icon: 'settings' },
 ];
 
+const CONTACTS_NAV: NavItem[] = [
+  { label: 'All submissions', route: '/dashboard/contacts', icon: 'mail' },
+  { label: 'Settings', route: '/dashboard/settings', icon: 'settings' },
+];
+
 const SECTION_ROOT: Record<Exclude<Section, 'site'>, string> = {
   blog: '/dashboard/blog',
   users: '/dashboard/users',
   products: '/dashboard/products',
   enquiries: '/dashboard/enquiries',
+  contacts: '/dashboard/contacts',
 };
 
 const SECTION_NAV: Record<Section, NavItem[]> = {
@@ -74,6 +80,7 @@ const SECTION_NAV: Record<Section, NavItem[]> = {
   users: USERS_NAV,
   products: PRODUCTS_NAV,
   enquiries: ENQUIRIES_NAV,
+  contacts: CONTACTS_NAV,
 };
 
 @Component({
@@ -90,6 +97,7 @@ export class DashboardLayout {
   readonly railItems: RailItem[] = [
     { label: 'Products', icon: 'bag', section: 'products' },
     { label: 'Enquiries', icon: 'inbox', section: 'enquiries' },
+    { label: 'Contacts', icon: 'mail', section: 'contacts' },
     { label: 'Blog', icon: 'blog', section: 'blog' },
     { label: 'Users', icon: 'users', section: 'users' },
     { label: 'More services', icon: 'grid', section: 'site' },
@@ -112,6 +120,7 @@ export class DashboardLayout {
     if (path.startsWith('/dashboard/users')) return 'users';
     if (path.startsWith('/dashboard/products') || path.startsWith('/dashboard/categories')) return 'products';
     if (path.startsWith('/dashboard/enquiries')) return 'enquiries';
+    if (path.startsWith('/dashboard/contacts')) return 'contacts';
     return 'site';
   });
 

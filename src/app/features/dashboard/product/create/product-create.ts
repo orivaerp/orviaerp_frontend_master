@@ -1,10 +1,17 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormArray, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ProductService } from '../../../../core/services/product.service';
 import { CategoryService } from '../../../../core/services/category.service';
 import { Category } from '../../../../core/models/category.model';
 import { PricingType, ProductStatus } from '../../../../core/models/product.model';
+
+function buildAddonGroup(fb: FormBuilder, label = '', value = '') {
+  return fb.group({
+    label: [label, [Validators.required]],
+    value: [value],
+  });
+}
 
 @Component({
   selector: 'app-product-create',
@@ -23,6 +30,7 @@ export class ProductCreate {
 
   readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
+    label: ['', [Validators.maxLength(60)]],
     category: ['', [Validators.required]],
     subCategory: [''],
     subSubCategory: [''],
@@ -35,11 +43,25 @@ export class ProductCreate {
     discount: [0],
     features: [''],
     deliverables: [''],
+    notes: [''],
+    addons: this.fb.array([] as ReturnType<typeof buildAddonGroup>[]),
     thumbnail: [''],
     demoUrl: [''],
     status: ['draft' as ProductStatus, [Validators.required]],
     isFeatured: [false],
   });
+
+  get addons(): FormArray {
+    return this.form.controls.addons;
+  }
+
+  addAddon(): void {
+    this.addons.push(buildAddonGroup(this.fb));
+  }
+
+  removeAddon(index: number): void {
+    this.addons.removeAt(index);
+  }
 
   private readonly categoryId = signal('');
   private readonly subCategoryId = signal('');
@@ -95,6 +117,7 @@ export class ProductCreate {
     this.productService
       .create({
         name: value.name!,
+        label: value.label || undefined,
         category: value.category!,
         subCategory: value.subCategory || undefined,
         subSubCategory: value.subSubCategory || undefined,
@@ -107,6 +130,8 @@ export class ProductCreate {
         discount: value.discount ?? 0,
         features: this.splitList(value.features),
         deliverables: this.splitList(value.deliverables),
+        notes: this.splitList(value.notes),
+        addons: value.addons as { label: string; value: string }[],
         thumbnail: value.thumbnail || undefined,
         demoUrl: value.demoUrl || undefined,
         status: value.status as ProductStatus,

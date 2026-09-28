@@ -1,10 +1,17 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormArray, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProductService } from '../../../../core/services/product.service';
 import { CategoryService } from '../../../../core/services/category.service';
 import { Category } from '../../../../core/models/category.model';
-import { Product, PricingType, ProductStatus } from '../../../../core/models/product.model';
+import { Product, ProductAddon, PricingType, ProductStatus } from '../../../../core/models/product.model';
+
+function buildAddonGroup(fb: FormBuilder, label = '', value = '') {
+  return fb.group({
+    label: [label, [Validators.required]],
+    value: [value],
+  });
+}
 
 @Component({
   selector: 'app-product-edit',
@@ -28,6 +35,7 @@ export class ProductEdit {
 
   readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
+    label: ['', [Validators.maxLength(60)]],
     category: ['', [Validators.required]],
     subCategory: [''],
     subSubCategory: [''],
@@ -40,11 +48,25 @@ export class ProductEdit {
     discount: [0],
     features: [''],
     deliverables: [''],
+    notes: [''],
+    addons: this.fb.array([] as ReturnType<typeof buildAddonGroup>[]),
     thumbnail: [''],
     demoUrl: [''],
     status: ['draft' as ProductStatus, [Validators.required]],
     isFeatured: [false],
   });
+
+  get addons(): FormArray {
+    return this.form.controls.addons;
+  }
+
+  addAddon(): void {
+    this.addons.push(buildAddonGroup(this.fb));
+  }
+
+  removeAddon(index: number): void {
+    this.addons.removeAt(index);
+  }
 
   private readonly categoryId = signal('');
   private readonly subCategoryId = signal('');
@@ -96,6 +118,7 @@ export class ProductEdit {
     this.subCategoryId.set(this.idOf(product.subCategory));
     this.form.patchValue({
       name: product.name,
+      label: product.label ?? '',
       category: this.idOf(product.category),
       subCategory: this.idOf(product.subCategory),
       subSubCategory: this.idOf(product.subSubCategory),
@@ -108,10 +131,16 @@ export class ProductEdit {
       discount: product.discount,
       features: (product.features ?? []).join(', '),
       deliverables: (product.deliverables ?? []).join(', '),
+      notes: (product.notes ?? []).join(', '),
       thumbnail: product.thumbnail ?? '',
       demoUrl: product.demoUrl ?? '',
       status: product.status,
       isFeatured: product.isFeatured,
+    });
+
+    this.addons.clear();
+    (product.addons ?? []).forEach((addon: ProductAddon) => {
+      this.addons.push(buildAddonGroup(this.fb, addon.label, addon.value ?? ''));
     });
   }
 
@@ -140,6 +169,7 @@ export class ProductEdit {
     this.productService
       .update(this.productId, {
         name: value.name!,
+        label: value.label || undefined,
         category: value.category!,
         subCategory: value.subCategory || null,
         subSubCategory: value.subSubCategory || null,
@@ -152,6 +182,8 @@ export class ProductEdit {
         discount: value.discount ?? 0,
         features: this.splitList(value.features),
         deliverables: this.splitList(value.deliverables),
+        notes: this.splitList(value.notes),
+        addons: value.addons as { label: string; value: string }[],
         thumbnail: value.thumbnail || undefined,
         demoUrl: value.demoUrl || undefined,
         status: value.status as ProductStatus,

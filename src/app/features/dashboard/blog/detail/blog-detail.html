@@ -15,8 +15,8 @@
     }
 
     <article class="card overflow-hidden">
-      @if (b.coverImage) {
-        <img [src]="b.coverImage" alt="" class="w-full h-56 object-cover bg-[var(--color-surface-muted)]" />
+      @if (b.coverImage?.url) {
+        <img [src]="b.coverImage?.url" alt="" class="w-full h-56 object-cover bg-[var(--color-surface-muted)]" />
       }
       <div class="p-6 space-y-4">
         <div class="flex items-center justify-between gap-3">

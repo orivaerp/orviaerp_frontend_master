@@ -37,7 +37,6 @@ export class BlogCreate {
     category: [''],
     tags: [''],
     excerpt: ['', [Validators.maxLength(280)]],
-    coverImage: [''],
     status: ['draft' as BlogStatus, [Validators.required]],
     content: ['', [Validators.required]],
     metaTitle: ['', [Validators.maxLength(70)]],
@@ -50,6 +49,9 @@ export class BlogCreate {
   readonly loading = signal(false);
   readonly errorMessage = signal('');
   readonly previewOpen = signal(false);
+
+  readonly coverImageFile = signal<File | null>(null);
+  readonly coverImagePreviewUrl = signal<string | null>(null);
 
   previewContent(): string {
     return this.preview()?.content || '<p class="text-[var(--color-text-subtle)]">Nothing written yet…</p>';
@@ -72,11 +74,34 @@ export class BlogCreate {
   }
 
   slugify(title: string | null | undefined): string {
-    return (title ?? '')
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '') || 'untitled-post';
+    return (
+      (title ?? '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'untitled-post'
+    );
+  }
+
+  onCoverImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.revokePreviewUrl();
+    this.coverImageFile.set(file);
+    this.coverImagePreviewUrl.set(URL.createObjectURL(file));
+  }
+
+  removeCoverImage(): void {
+    this.revokePreviewUrl();
+    this.coverImageFile.set(null);
+    this.coverImagePreviewUrl.set(null);
+  }
+
+  private revokePreviewUrl(): void {
+    const current = this.coverImagePreviewUrl();
+    if (current) URL.revokeObjectURL(current);
   }
 
   submit(): void {
@@ -94,7 +119,6 @@ export class BlogCreate {
         title: value.title!,
         content: value.content!,
         excerpt: value.excerpt || undefined,
-        coverImage: value.coverImage || undefined,
         category: value.category || undefined,
         tags: this.previewTags(),
         status: value.status as BlogStatus,
@@ -102,7 +126,21 @@ export class BlogCreate {
         metaDescription: value.metaDescription || undefined,
       })
       .subscribe({
-        next: () => this.router.navigate(['/dashboard/blog']),
+        next: (res) => {
+          const file = this.coverImageFile();
+          if (!file) {
+            this.router.navigate(['/dashboard/blog']);
+            return;
+          }
+
+          this.blogService.uploadCoverImage(res.data._id, file).subscribe({
+            next: () => this.router.navigate(['/dashboard/blog']),
+            error: () => {
+              // Post is already created — send them to edit it so they can retry the image upload.
+              this.router.navigate(['/dashboard/blog', res.data._id, 'edit']);
+            },
+          });
+        },
         error: (err) => {
           this.loading.set(false);
           this.errorMessage.set(err?.error?.message ?? 'Could not publish this post');

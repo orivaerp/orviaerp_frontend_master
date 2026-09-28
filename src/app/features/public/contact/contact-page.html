@@ -1,0 +1,188 @@
+<div class="min-h-screen bg-[var(--color-surface-alt)]">
+  <header class="border-b border-[var(--color-border)] bg-white">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a routerLink="/" class="flex items-center gap-2.5">
+        <div class="h-7 w-7 rounded-[var(--radius-sm)] bg-[var(--color-primary-500)] flex items-center justify-center text-xs font-bold text-white">
+          O
+        </div>
+        <span class="text-sm font-semibold tracking-tight">OERP</span>
+      </a>
+      <a routerLink="/login" class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]">Client login</a>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 py-10 md:py-14">
+    <div class="max-w-2xl">
+      <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-primary-600)]">Contact</p>
+      <h1 class="text-3xl font-semibold mt-2">Tell us about your project</h1>
+      <p class="text-[var(--color-text-muted)] mt-3">
+        Share a few details below and our team will get back to you with next steps — usually within a business day.
+      </p>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-8 mt-10">
+      <div class="lg:col-span-2">
+        @if (submitted()) {
+          <div class="card p-8 text-center space-y-2">
+            <div class="mx-auto h-12 w-12 rounded-full bg-[var(--color-primary-50)] text-[var(--color-primary-600)] flex items-center justify-center text-2xl">
+              ✓
+            </div>
+            <h2 class="text-xl font-semibold">Thanks — your brief is in.</h2>
+            <p class="text-sm text-[var(--color-text-muted)] max-w-sm mx-auto">
+              A real person on our team will review this and follow up on the email or phone number you shared.
+            </p>
+            <a routerLink="/" class="btn-outline inline-flex mt-3">Back to home</a>
+          </div>
+        } @else {
+          <div class="card p-6 md:p-8 space-y-5">
+            <div>
+              <h2 class="font-semibold">Project brief</h2>
+              <p class="text-xs text-[var(--color-text-muted)] mt-0.5">Fields marked * are required.</p>
+            </div>
+
+            @if (errorMessage()) {
+              <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+                {{ errorMessage() }}
+              </div>
+            }
+
+            <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="space-y-4">
+              <div>
+                <label class="label" for="companyWebsite">Company website</label>
+                <input id="companyWebsite" class="input" formControlName="companyWebsite" placeholder="https://yourcompany.com" />
+              </div>
+
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="label" for="name">Your name *</label>
+                  <input id="name" class="input" formControlName="name" placeholder="Jordan Smith" />
+                  @if (form.controls.name.invalid && form.controls.name.touched) {
+                    <p class="field-error">Name needs at least 2 characters.</p>
+                  }
+                </div>
+                <div>
+                  <label class="label" for="company">Company / organisation</label>
+                  <input id="company" class="input" formControlName="company" />
+                </div>
+              </div>
+
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="label" for="email">Email *</label>
+                  <input id="email" type="email" class="input" formControlName="email" placeholder="you@company.com" />
+                  @if (form.controls.email.invalid && form.controls.email.touched) {
+                    <p class="field-error">Enter a valid email address.</p>
+                  }
+                </div>
+                <div>
+                  <label class="label" for="phone">Phone / WhatsApp *</label>
+                  <input id="phone" class="input" formControlName="phone" placeholder="+91 …" />
+                  @if (form.controls.phone.invalid && form.controls.phone.touched) {
+                    <p class="field-error">A contact number is required.</p>
+                  }
+                </div>
+              </div>
+
+              <div>
+                <label class="label" for="service">What do you need? *</label>
+                <select id="service" class="input" formControlName="service">
+                  <option value="">Select a service</option>
+                  @for (s of services; track s.value) {
+                    <option [value]="s.value">{{ s.label }}</option>
+                  }
+                </select>
+                @if (form.controls.service.invalid && form.controls.service.touched) {
+                  <p class="field-error">Please choose a service.</p>
+                }
+              </div>
+
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="label" for="budget">Approximate budget</label>
+                  <select id="budget" class="input" formControlName="budget">
+                    <option value="">Select a range</option>
+                    @for (b of budgets; track b.value) {
+                      <option [value]="b.value">{{ b.label }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label class="label" for="timeline">When do you want to start?</label>
+                  <select id="timeline" class="input" formControlName="timeline">
+                    <option value="">Select a timeline</option>
+                    @for (t of timelines; track t.value) {
+                      <option [value]="t.value">{{ t.label }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="label" for="message">Project brief *</label>
+                <textarea
+                  id="message"
+                  class="input"
+                  rows="5"
+                  formControlName="message"
+                  placeholder="What are you trying to build? Who is it for? Any must-have features or deadlines?"
+                ></textarea>
+                @if (form.controls.message.invalid && form.controls.message.touched) {
+                  <p class="field-error">Give us at least a sentence or two — 10 characters minimum.</p>
+                }
+              </div>
+
+              <p class="text-xs text-[var(--color-text-subtle)]">
+                Your details stay with us. We're happy to sign an NDA on request.
+              </p>
+
+              <button type="submit" class="btn-primary btn-block" [disabled]="submitting()">
+                {{ submitting() ? 'Sending…' : 'Send project brief' }}
+              </button>
+            </form>
+          </div>
+        }
+      </div>
+
+      <aside class="space-y-4">
+        <div class="card p-5 space-y-3">
+          <h2 class="font-semibold text-sm">Prefer to talk it through?</h2>
+          <p class="text-xs text-[var(--color-text-muted)]">
+            A short call often covers more ground than a back-and-forth over email.
+          </p>
+          <div class="space-y-2.5 pt-1 text-sm">
+            <div>
+              <p class="text-[var(--color-text-muted)] text-xs">Call us</p>
+              <p class="font-medium">+91 91225 05250</p>
+            </div>
+            <div>
+              <p class="text-[var(--color-text-muted)] text-xs">Email</p>
+              <p class="font-medium">hello&#64;orviaerp.com</p>
+            </div>
+            <div>
+              <p class="text-[var(--color-text-muted)] text-xs">Hours</p>
+              <p class="font-medium">Mon–Sat, 10:00 AM–7:00 PM IST</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card p-5 space-y-3">
+          <h2 class="font-semibold text-sm">What happens next</h2>
+          <ol class="space-y-3 text-sm">
+            <li class="flex gap-2.5">
+              <span class="h-5 w-5 shrink-0 rounded-full bg-[var(--color-primary-50)] text-[var(--color-primary-700)] text-xs font-semibold flex items-center justify-center">1</span>
+              <span class="text-[var(--color-text-muted)]">We read your brief, usually within a few hours on working days.</span>
+            </li>
+            <li class="flex gap-2.5">
+              <span class="h-5 w-5 shrink-0 rounded-full bg-[var(--color-primary-50)] text-[var(--color-primary-700)] text-xs font-semibold flex items-center justify-center">2</span>
+              <span class="text-[var(--color-text-muted)]">If anything's unclear, we'll ask — one short call or email, no charge.</span>
+            </li>
+            <li class="flex gap-2.5">
+              <span class="h-5 w-5 shrink-0 rounded-full bg-[var(--color-primary-50)] text-[var(--color-primary-700)] text-xs font-semibold flex items-center justify-center">3</span>
+              <span class="text-[var(--color-text-muted)]">You get a written scope, timeline and price — no obligation to proceed.</span>
+            </li>
+          </ol>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>

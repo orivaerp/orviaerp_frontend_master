@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiSuccess } from '../models/user.model';
-import { Product, ProductFaq, ProductPlan, ProductSeo, PricingType, ProductStatus } from '../models/product.model';
+import { Product, ProductAddon, ProductFaq, ProductPlan, ProductSeo, PricingType, ProductStatus } from '../models/product.model';
 
 export interface ProductPayload {
   name: string;
   /** Optional — auto-generated from the category on create when left blank. */
   code?: string;
+  label?: string;
   shortDescription?: string;
   description?: string;
   category: string;
@@ -23,6 +24,8 @@ export interface ProductPayload {
   features?: string[];
   deliverables?: string[];
   faqs?: ProductFaq[];
+  addons?: ProductAddon[];
+  notes?: string[];
   thumbnail?: string;
   gallery?: string[];
   demoUrl?: string;

@@ -21,6 +21,9 @@
       <div class="p-6 space-y-4">
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+            @if (p.label) {
+              <span class="badge bg-[var(--color-primary-600)] text-white">{{ p.label }}</span>
+            }
             <span class="badge bg-[var(--color-primary-50)] text-[var(--color-primary-700)]">{{ categoryName(p.category) }}</span>
             @if (p.subCategory) {
               <span class="badge bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]">{{ categoryName(p.subCategory) }}</span>
@@ -94,6 +97,33 @@
             <ul class="list-disc list-inside text-sm space-y-0.5">
               @for (d of p.deliverables; track d) {
                 <li>{{ d }}</li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (p.addons && p.addons.length) {
+          <div>
+            <p class="text-xs font-medium uppercase tracking-wide text-[var(--color-text-subtle)] mb-1.5">Add-ons</p>
+            <ul class="text-sm space-y-1">
+              @for (addon of p.addons; track addon.label) {
+                <li class="flex items-center justify-between border-b border-[var(--color-border)] pb-1 last:border-0 last:pb-0">
+                  <span>{{ addon.label }}</span>
+                  @if (addon.value) {
+                    <span class="text-[var(--color-text-muted)]">{{ addon.value }}</span>
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (p.notes && p.notes.length) {
+          <div>
+            <p class="text-xs font-medium uppercase tracking-wide text-[var(--color-text-subtle)] mb-1.5">Notes</p>
+            <ul class="list-disc list-inside text-sm space-y-0.5 text-[var(--color-text-muted)]">
+              @for (n of p.notes; track n) {
+                <li>{{ n }}</li>
               }
             </ul>
           </div>

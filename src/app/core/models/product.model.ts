@@ -17,6 +17,11 @@ export interface ProductFaq {
   answer: string;
 }
 
+export interface ProductAddon {
+  label: string;
+  value?: string;
+}
+
 export interface ProductSeo {
   metaTitle?: string;
   metaDescription?: string;
@@ -29,6 +34,7 @@ export interface Product {
   name: string;
   slug: string;
   code: string;
+  label?: string;
   shortDescription?: string;
   description?: string;
   category: CategoryRef | string;
@@ -43,6 +49,8 @@ export interface Product {
   features?: string[];
   deliverables?: string[];
   faqs?: ProductFaq[];
+  addons?: ProductAddon[];
+  notes?: string[];
   thumbnail?: string;
   gallery?: string[];
   demoUrl?: string;

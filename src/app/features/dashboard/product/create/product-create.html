@@ -14,12 +14,18 @@
 
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="space-y-6">
     <div class="card p-5 space-y-4">
-      <div>
-        <label class="label" for="name">Name</label>
-        <input id="name" class="input" formControlName="name" placeholder="Portfolio Website" />
-        @if (form.controls.name.invalid && form.controls.name.touched) {
-          <p class="field-error">Name needs at least 2 characters.</p>
-        }
+      <div class="grid grid-cols-3 gap-3">
+        <div class="col-span-2">
+          <label class="label" for="name">Name</label>
+          <input id="name" class="input" formControlName="name" placeholder="Portfolio Website" />
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+            <p class="field-error">Name needs at least 2 characters.</p>
+          }
+        </div>
+        <div>
+          <label class="label" for="label">Label</label>
+          <input id="label" class="input" formControlName="label" placeholder="e.g. Bestseller" />
+        </div>
       </div>
 
       <div class="grid grid-cols-3 gap-3">
@@ -79,6 +85,41 @@
         <label class="label" for="deliverables">Deliverables (comma separated)</label>
         <input id="deliverables" class="input" formControlName="deliverables" placeholder="Source code, Deployment" />
       </div>
+
+      <div>
+        <label class="label" for="notes">Notes (comma separated)</label>
+        <input id="notes" class="input" formControlName="notes" placeholder="Internal notes, client preferences…" />
+      </div>
+    </div>
+
+    <div class="card p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="font-semibold">Add-ons</h2>
+        <button type="button" class="btn-outline !py-1.5" (click)="addAddon()">+ Add add-on</button>
+      </div>
+
+      @if (addons.length === 0) {
+        <p class="text-sm text-[var(--color-text-muted)]">No add-ons yet.</p>
+      } @else {
+        <div formArrayName="addons" class="space-y-3">
+          @for (addon of addons.controls; track $index) {
+            <div [formGroupName]="$index" class="flex items-start gap-3">
+              <div class="flex-1">
+                <input class="input" formControlName="label" placeholder="Label, e.g. Extra revision" />
+                @if (addon.get('label')?.invalid && addon.get('label')?.touched) {
+                  <p class="field-error">Label is required.</p>
+                }
+              </div>
+              <div class="flex-1">
+                <input class="input" formControlName="value" placeholder="Value, e.g. 1500" />
+              </div>
+              <button type="button" class="btn-ghost !text-[var(--color-danger)] shrink-0" (click)="removeAddon($index)">
+                Remove
+              </button>
+            </div>
+          }
+        </div>
+      }
     </div>
 
     <div class="card p-5 space-y-4">

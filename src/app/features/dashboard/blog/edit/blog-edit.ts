@@ -40,7 +40,6 @@ export class BlogEdit {
     category: [''],
     tags: [''],
     excerpt: ['', [Validators.maxLength(280)]],
-    coverImage: [''],
     status: ['draft' as BlogStatus, [Validators.required]],
     content: ['', [Validators.required]],
     metaTitle: ['', [Validators.maxLength(70)]],
@@ -56,6 +55,8 @@ export class BlogEdit {
   readonly errorMessage = signal('');
   readonly previewOpen = signal(false);
 
+  readonly uploadingCoverImage = signal(false);
+
   constructor() {
     this.blogService.getById(this.blogId).subscribe({
       next: (res) => {
@@ -65,7 +66,6 @@ export class BlogEdit {
           category: res.data.category ?? '',
           tags: (res.data.tags ?? []).join(', '),
           excerpt: res.data.excerpt ?? '',
-          coverImage: res.data.coverImage ?? '',
           status: res.data.status,
           content: res.data.content,
           metaTitle: res.data.metaTitle ?? '',
@@ -114,6 +114,46 @@ export class BlogEdit {
     );
   }
 
+  // The post already exists on this page, so a picked file uploads (and the old
+  // S3 object is deleted server-side) right away — no need to wait for Save.
+  onCoverImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.uploadingCoverImage.set(true);
+    this.errorMessage.set('');
+
+    this.blogService.uploadCoverImage(this.blogId, file).subscribe({
+      next: (res) => {
+        this.blog.set(res.data);
+        this.uploadingCoverImage.set(false);
+        input.value = '';
+      },
+      error: (err) => {
+        this.uploadingCoverImage.set(false);
+        this.errorMessage.set(err?.error?.message ?? 'Could not upload the cover image');
+        input.value = '';
+      },
+    });
+  }
+
+  removeCoverImage(): void {
+    this.uploadingCoverImage.set(true);
+    this.errorMessage.set('');
+
+    this.blogService.deleteCoverImage(this.blogId).subscribe({
+      next: (res) => {
+        this.blog.set(res.data);
+        this.uploadingCoverImage.set(false);
+      },
+      error: (err) => {
+        this.uploadingCoverImage.set(false);
+        this.errorMessage.set(err?.error?.message ?? 'Could not remove the cover image');
+      },
+    });
+  }
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -129,7 +169,6 @@ export class BlogEdit {
         title: value.title!,
         content: value.content!,
         excerpt: value.excerpt || undefined,
-        coverImage: value.coverImage || undefined,
         category: value.category || undefined,
         tags: this.previewTags(),
         status: value.status as BlogStatus,

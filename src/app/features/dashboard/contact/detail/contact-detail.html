@@ -1,0 +1,133 @@
+<div class="p-6 max-w-2xl mx-auto space-y-6">
+  <a routerLink="/dashboard/contacts" class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+    ← Back to submissions
+  </a>
+
+  @if (loading()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Loading submission…</div>
+  } @else if (notFound()) {
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Submission not found.</div>
+  } @else if (submission(); as s) {
+    @if (errorMessage()) {
+      <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-semibold">{{ s.name }}</h1>
+        <p class="text-sm text-[var(--color-text-muted)]">{{ s.phone }} · {{ s.email }}</p>
+      </div>
+      <button
+        type="button"
+        class="btn bg-[var(--color-danger-soft)] text-[var(--color-danger)] hover:bg-red-100"
+        [disabled]="deleting()"
+        (click)="remove()"
+      >
+        {{ deleting() ? 'Deleting…' : 'Delete' }}
+      </button>
+    </div>
+
+    <div class="card p-5 space-y-4">
+      <div class="flex flex-wrap items-center gap-2">
+        @for (st of statuses; track st) {
+          <button
+            type="button"
+            class="px-3 py-1.5 rounded-full text-xs font-medium border disabled:opacity-50"
+            [class]="
+              s.status === st
+                ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)]'
+                : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-alt)]'
+            "
+            [disabled]="updatingStatus()"
+            (click)="setStatus(st)"
+          >
+            {{ statusLabel(st) }}
+          </button>
+        }
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <p class="text-[var(--color-text-muted)]">Service requested</p>
+          <p class="font-medium mt-0.5">{{ serviceLabel(s.service) }}</p>
+        </div>
+        @if (s.company) {
+          <div>
+            <p class="text-[var(--color-text-muted)]">Company</p>
+            <p class="font-medium mt-0.5">{{ s.company }}</p>
+          </div>
+        }
+        @if (s.companyWebsite) {
+          <div>
+            <p class="text-[var(--color-text-muted)]">Company website</p>
+            <a [href]="s.companyWebsite" target="_blank" rel="noopener" class="font-medium mt-0.5 block text-[var(--color-primary-600)] hover:underline truncate">
+              {{ s.companyWebsite }}
+            </a>
+          </div>
+        }
+        @if (s.budget) {
+          <div>
+            <p class="text-[var(--color-text-muted)]">Budget</p>
+            <p class="font-medium mt-0.5">{{ budgetLabel(s.budget) }}</p>
+          </div>
+        }
+        @if (s.timeline) {
+          <div>
+            <p class="text-[var(--color-text-muted)]">Timeline</p>
+            <p class="font-medium mt-0.5">{{ timelineLabel(s.timeline) }}</p>
+          </div>
+        }
+        <div>
+          <p class="text-[var(--color-text-muted)]">Received</p>
+          <p class="font-medium mt-0.5">{{ s.createdAt | slice: 0 : 10 }}</p>
+        </div>
+        @if (s.source) {
+          <div>
+            <p class="text-[var(--color-text-muted)]">Source</p>
+            <p class="font-medium mt-0.5">{{ s.source }}</p>
+          </div>
+        }
+      </div>
+
+      <div>
+        <p class="text-[var(--color-text-muted)] text-sm mb-1">Project brief</p>
+        <p class="text-sm whitespace-pre-line">{{ s.message }}</p>
+      </div>
+    </div>
+
+    <div class="card p-5 space-y-4">
+      <h2 class="font-semibold text-sm">Internal notes</h2>
+
+      @if (s.notes.length === 0) {
+        <p class="text-sm text-[var(--color-text-muted)]">No notes yet.</p>
+      } @else {
+        <div class="space-y-3">
+          @for (note of s.notes; track $index) {
+            <div class="rounded-[var(--radius-md)] bg-[var(--color-surface-alt)] px-3.5 py-2.5">
+              <p class="text-sm">{{ note.text }}</p>
+              <p class="text-xs text-[var(--color-text-subtle)] mt-1">
+                {{ noteAuthor(note) }} · {{ note.createdAt | slice: 0 : 10 }}
+              </p>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="flex items-start gap-2">
+        <textarea
+          class="input"
+          rows="2"
+          placeholder="Add an internal note…"
+          [ngModel]="noteText()"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="noteText.set($event)"
+        ></textarea>
+        <button type="button" class="btn-primary shrink-0" [disabled]="addingNote() || !noteText().trim()" (click)="addNote()">
+          {{ addingNote() ? 'Adding…' : 'Add' }}
+        </button>
+      </div>
+    </div>
+  }
+</div>

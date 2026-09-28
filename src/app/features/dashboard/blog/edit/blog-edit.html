@@ -40,8 +40,31 @@
         </div>
 
         <div>
-          <label class="label" for="coverImage">Cover image URL</label>
-          <input id="coverImage" class="input" formControlName="coverImage" placeholder="https://…" />
+          <label class="label" for="coverImage">Cover image</label>
+          @if (blog()?.coverImage?.url) {
+            <div class="relative mb-2 w-full h-40 rounded-[var(--radius-md)] overflow-hidden bg-[var(--color-surface-muted)]">
+              <img [src]="blog()?.coverImage?.url" alt="" class="w-full h-full object-cover" />
+              <button
+                type="button"
+                class="absolute top-2 right-2 btn-ghost !bg-black/50 !text-white hover:!bg-black/70 !py-1 !px-2 text-xs"
+                [disabled]="uploadingCoverImage()"
+                (click)="removeCoverImage()"
+              >
+                {{ uploadingCoverImage() ? 'Working…' : 'Remove' }}
+              </button>
+            </div>
+          }
+          <input
+            id="coverImage"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            class="input"
+            [disabled]="uploadingCoverImage()"
+            (change)="onCoverImageSelected($event)"
+          />
+          <p class="text-xs text-[var(--color-text-subtle)] mt-1">
+            {{ uploadingCoverImage() ? 'Uploading…' : 'Uploads immediately. Replacing an image deletes the previous file from storage.' }}
+          </p>
         </div>
 
         <div>
@@ -145,8 +168,8 @@
       </div>
 
       <article class="card overflow-hidden">
-        @if (preview().coverImage) {
-          <img [src]="preview().coverImage" alt="" class="w-full h-56 object-cover bg-[var(--color-surface-muted)]" />
+        @if (blog()?.coverImage?.url) {
+          <img [src]="blog()?.coverImage?.url" alt="" class="w-full h-56 object-cover bg-[var(--color-surface-muted)]" />
         }
         <div class="p-6 space-y-4">
           <div class="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">

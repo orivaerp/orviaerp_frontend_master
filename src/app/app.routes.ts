@@ -27,6 +27,10 @@ export const routes: Routes = [
       import('./features/auth/reset-password/reset-password').then((m) => m.ResetPassword),
   },
   {
+    path: 'contact',
+    loadComponent: () => import('./features/public/contact/contact-page').then((m) => m.ContactPage),
+  },
+  {
     path: 'dashboard',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -126,6 +130,16 @@ export const routes: Routes = [
         path: 'enquiries/:id',
         loadComponent: () =>
           import('./features/dashboard/enquiry/detail/enquiry-detail').then((m) => m.EnquiryDetail),
+      },
+      {
+        path: 'contacts',
+        loadComponent: () =>
+          import('./features/dashboard/contact/list/contact-list').then((m) => m.ContactList),
+      },
+      {
+        path: 'contacts/:id',
+        loadComponent: () =>
+          import('./features/dashboard/contact/detail/contact-detail').then((m) => m.ContactDetail),
       },
     ],
   },
