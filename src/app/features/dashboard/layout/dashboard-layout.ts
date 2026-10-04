@@ -6,7 +6,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../../core/services/auth.service';
 import { Icon } from '../../../shared/components/icon/icon';
 
-type Section = 'site' | 'blog' | 'users' | 'products' | 'enquiries' | 'contacts';
+type Section = 'site' | 'blog' | 'users' | 'products' | 'enquiries' | 'contacts' | 'whatsapp';
 
 interface RailItem {
   label: string;
@@ -66,12 +66,20 @@ const CONTACTS_NAV: NavItem[] = [
   { label: 'Settings', route: '/dashboard/settings', icon: 'settings' },
 ];
 
+const WHATSAPP_NAV: NavItem[] = [
+  { label: 'Inbox', route: '/dashboard/whatsapp', icon: 'message-circle' },
+  { label: 'Broadcast', route: '/dashboard/whatsapp/broadcast', icon: 'send' },
+  { label: 'Templates', route: '/dashboard/whatsapp/templates', icon: 'tag' },
+  { label: 'Settings', route: '/dashboard/settings', icon: 'settings' },
+];
+
 const SECTION_ROOT: Record<Exclude<Section, 'site'>, string> = {
   blog: '/dashboard/blog',
   users: '/dashboard/users',
   products: '/dashboard/products',
   enquiries: '/dashboard/enquiries',
   contacts: '/dashboard/contacts',
+  whatsapp: '/dashboard/whatsapp',
 };
 
 const SECTION_NAV: Record<Section, NavItem[]> = {
@@ -81,6 +89,7 @@ const SECTION_NAV: Record<Section, NavItem[]> = {
   products: PRODUCTS_NAV,
   enquiries: ENQUIRIES_NAV,
   contacts: CONTACTS_NAV,
+  whatsapp: WHATSAPP_NAV,
 };
 
 @Component({
@@ -95,6 +104,7 @@ export class DashboardLayout {
   readonly userMenuOpen = signal(false);
 
   readonly railItems: RailItem[] = [
+    { label: 'WhatsApp', icon: 'message-circle', section: 'whatsapp' },
     { label: 'Products', icon: 'bag', section: 'products' },
     { label: 'Enquiries', icon: 'inbox', section: 'enquiries' },
     { label: 'Contacts', icon: 'mail', section: 'contacts' },
@@ -121,6 +131,7 @@ export class DashboardLayout {
     if (path.startsWith('/dashboard/products') || path.startsWith('/dashboard/categories')) return 'products';
     if (path.startsWith('/dashboard/enquiries')) return 'enquiries';
     if (path.startsWith('/dashboard/contacts')) return 'contacts';
+    if (path.startsWith('/dashboard/whatsapp')) return 'whatsapp';
     return 'site';
   });
 

@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:5001/api/v1',
+  apiUrl: 'https://orvia.icher.co.in/api/v1',
 };

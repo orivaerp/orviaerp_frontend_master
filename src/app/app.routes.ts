@@ -141,6 +141,25 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dashboard/contact/detail/contact-detail').then((m) => m.ContactDetail),
       },
+      {
+        path: 'whatsapp',
+        loadComponent: () =>
+          import('./features/dashboard/whatsapp/inbox/whatsapp-inbox').then((m) => m.WhatsappInbox),
+      },
+      {
+        path: 'whatsapp/templates',
+        loadComponent: () =>
+          import('./features/dashboard/whatsapp/templates/whatsapp-templates').then(
+            (m) => m.WhatsappTemplates
+          ),
+      },
+      {
+        path: 'whatsapp/broadcast',
+        loadComponent: () =>
+          import('./features/dashboard/whatsapp/broadcast/whatsapp-broadcast').then(
+            (m) => m.WhatsappBroadcast
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },

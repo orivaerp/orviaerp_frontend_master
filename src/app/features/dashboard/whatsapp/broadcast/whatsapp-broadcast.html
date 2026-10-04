@@ -1,0 +1,136 @@
+<div class="p-6 max-w-3xl">
+  <h1 class="text-lg font-semibold text-[var(--color-text)] mb-1">Broadcast a Template</h1>
+  <p class="text-sm text-[var(--color-text-muted)] mb-6">
+    Send an approved template message to up to {{ maxRecipients }} recipients at once.
+  </p>
+
+  <div class="card p-5 mb-8">
+    <label class="label">Template</label>
+    @if (loadingTemplates()) {
+      <p class="text-sm text-[var(--color-text-muted)]">Loading templates…</p>
+    } @else {
+      <select
+        class="input mb-3"
+        [ngModel]="selectedTemplateName()"
+        (ngModelChange)="selectTemplate($event)"
+      >
+        <option value="">Choose a template…</option>
+        @for (template of templates(); track template.id) {
+          <option [value]="template.name">{{ template.name }} ({{ template.language }})</option>
+        }
+      </select>
+    }
+
+    @if (selectedTemplate()) {
+      <p class="text-xs text-[var(--color-text-muted)] bg-[var(--color-surface-alt)] rounded-[var(--radius-md)] border border-[var(--color-border)] p-2 mb-3">
+        {{ templateBodyText(selectedTemplate()!) }}
+      </p>
+
+      @if (headerMediaType()) {
+        <label class="label">Header {{ headerMediaType() }} (media ID or public https link)</label>
+        <input
+          class="input mb-1"
+          placeholder="e.g. 1148277527865803 or https://example.com/offer.jpg"
+          [ngModel]="headerMediaRef()"
+          (ngModelChange)="headerMediaRef.set($event)"
+        />
+        <p class="text-xs text-[var(--color-text-subtle)] mb-3">
+          This template has a {{ headerMediaType() }} header, so WhatsApp requires one for every send.
+        </p>
+      }
+
+      @if (templateParams().length > 0) {
+        <label class="label">Template values (same for every recipient)</label>
+        <div class="flex flex-col gap-2 mb-3">
+          @for (param of templateParams(); track $index) {
+            <input
+              class="input"
+              [placeholder]="'{{' + ($index + 1) + '}} value'"
+              [ngModel]="param"
+              (ngModelChange)="setTemplateParam($index, $event)"
+            />
+          }
+        </div>
+      }
+    }
+
+    <label class="label">Recipients</label>
+    <textarea
+      class="input resize-none"
+      rows="6"
+      placeholder="Paste phone numbers, one per line or comma-separated. Digits only, with country code (e.g. 919876543210)."
+      [ngModel]="recipientsRaw()"
+      (ngModelChange)="recipientsRaw.set($event)"
+    ></textarea>
+
+    <div class="flex items-center justify-between mt-2">
+      <p
+        class="text-xs"
+        [class.text-[var(--color-danger)]]="tooManyRecipients()"
+        [class.text-[var(--color-text-muted)]]="!tooManyRecipients()"
+      >
+        {{ recipientCount() }} valid recipient(s) detected
+        @if (tooManyRecipients()) {
+          — max is {{ maxRecipients }}, trim the list
+        }
+      </p>
+    </div>
+
+    @if (errorMessage()) {
+      <p class="error-text mt-2">{{ errorMessage() }}</p>
+    }
+
+    <button class="btn-primary mt-4" [disabled]="!canSend()" (click)="send()">
+      <app-icon name="send" [size]="16" />
+      {{ sending() ? 'Starting…' : 'Send to ' + recipientCount() + ' recipient(s)' }}
+    </button>
+  </div>
+
+  <h2 class="text-sm font-semibold text-[var(--color-text)] mb-3">Past broadcasts</h2>
+
+  @if (loadingBroadcasts()) {
+    <p class="text-sm text-[var(--color-text-muted)]">Loading…</p>
+  } @else if (broadcasts().length === 0) {
+    <p class="text-sm text-[var(--color-text-muted)]">No broadcasts sent yet.</p>
+  } @else {
+    <div class="flex flex-col gap-3">
+      @for (broadcast of broadcasts(); track broadcast._id) {
+        <div class="card p-4">
+          <div class="flex items-center justify-between gap-2 mb-1">
+            <p class="text-sm font-medium text-[var(--color-text)]">{{ broadcast.templateName }}</p>
+            <span
+              class="badge"
+              [class.bg-[var(--color-success-soft)]]="broadcast.status === 'completed'"
+              [class.text-[var(--color-success)]]="broadcast.status === 'completed'"
+              [class.bg-amber-50]="broadcast.status === 'processing'"
+              [class.text-amber-700]="broadcast.status === 'processing'"
+            >
+              {{ broadcast.status }}
+            </span>
+          </div>
+          <p class="text-xs text-[var(--color-text-subtle)] mb-2">
+            {{ broadcast.createdAt | date: 'medium' }} · by {{ broadcast.createdBy.firstName }}
+          </p>
+          <div class="flex items-center gap-4 text-xs text-[var(--color-text-muted)]">
+            <span>Total: {{ broadcast.totalCount }}</span>
+            <span class="text-[var(--color-success)]">Sent: {{ broadcast.sentCount }}</span>
+            @if (broadcast.failedCount > 0) {
+              <span class="text-[var(--color-danger)]">Failed: {{ broadcast.failedCount }}</span>
+            }
+          </div>
+          @if (broadcast.failedCount > 0 && firstError(broadcast)) {
+            <p class="text-xs text-[var(--color-danger)] mt-2 break-words">
+              Reason: {{ firstError(broadcast) }}
+            </p>
+          }
+          <div class="h-1.5 rounded-full bg-[var(--color-surface-alt)] mt-2 overflow-hidden">
+            <div
+              class="h-full bg-[var(--color-primary-500)]"
+              [style.width.%]="((broadcast.sentCount + broadcast.failedCount) / broadcast.totalCount) * 100"
+            ></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

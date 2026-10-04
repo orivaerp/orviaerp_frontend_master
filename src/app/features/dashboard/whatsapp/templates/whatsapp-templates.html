@@ -1,0 +1,36 @@
+<div class="p-6 max-w-4xl">
+  <h1 class="text-lg font-semibold text-[var(--color-text)] mb-1">WhatsApp Message Templates</h1>
+  <p class="text-sm text-[var(--color-text-muted)] mb-6">
+    All templates from your WhatsApp Business Account, whatever their review status. Only
+    <span class="font-medium text-[var(--color-success)]">Approved</span> ones can actually be sent — they're
+    the only choices offered when replying or broadcasting.
+  </p>
+
+  @if (loading()) {
+    <p class="text-sm text-[var(--color-text-muted)]">Loading templates…</p>
+  } @else if (errorMessage()) {
+    <p class="error-text">{{ errorMessage() }}</p>
+  } @else if (templates().length === 0) {
+    <p class="text-sm text-[var(--color-text-muted)]">
+      No templates found for this WhatsApp Business Account yet.
+    </p>
+  } @else {
+    <div class="grid gap-4 sm:grid-cols-2">
+      @for (template of templates(); track template.id) {
+        <div class="card p-4">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <p class="text-sm font-semibold text-[var(--color-text)] truncate">{{ template.name }}</p>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span [class]="statusBadgeClass(template.status)">{{ template.status }}</span>
+              <span class="badge bg-[var(--color-primary-50)] text-[var(--color-primary-700)]">
+                {{ template.category }}
+              </span>
+            </div>
+          </div>
+          <p class="text-xs text-[var(--color-text-subtle)] mb-2">{{ template.language }}</p>
+          <p class="text-sm text-[var(--color-text)] whitespace-pre-wrap">{{ templateBodyText(template) }}</p>
+        </div>
+      }
+    </div>
+  }
+</div>
