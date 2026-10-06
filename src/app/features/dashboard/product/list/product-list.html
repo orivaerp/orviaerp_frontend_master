@@ -2,7 +2,9 @@
   <div class="flex items-center justify-between">
     <div>
       <h1 class="text-2xl font-semibold">Products</h1>
-      <p class="text-sm text-[var(--color-text-muted)] mt-1">Services and products offered across all categories.</p>
+      <p class="text-sm text-[var(--color-text-muted)] mt-1">
+        Services and products offered across all categories.
+      </p>
     </div>
     <a routerLink="/dashboard/products/new" class="btn-primary">
       <app-icon name="plus" [size]="16" />
@@ -13,7 +15,9 @@
   @if (loading()) {
     <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Loading products…</div>
   } @else if (errorMessage()) {
-    <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+    <div
+      class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]"
+    >
       {{ errorMessage() }}
     </div>
   } @else if (products().length === 0) {
@@ -22,7 +26,9 @@
     <div class="card overflow-hidden">
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-text-muted)]">
+          <tr
+            class="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-text-muted)]"
+          >
             <th class="px-5 py-3 font-medium">Name</th>
             <th class="px-5 py-3 font-medium">Category</th>
             <th class="px-5 py-3 font-medium">Price</th>
@@ -33,10 +39,17 @@
           @for (product of products(); track product._id) {
             <tr class="hover:bg-[var(--color-surface-alt)]">
               <td class="px-5 py-3 font-medium">
-                <a [routerLink]="['/dashboard/products', product._id]" class="hover:text-[var(--color-primary-600)] hover:underline">
+                <a
+                  [routerLink]="['/dashboard/products', product._id]"
+                  class="hover:text-[var(--color-primary-600)] hover:underline"
+                >
                   {{ product.name }}
                   @if (product.code) {
-                    <span class="ml-1.5 font-normal text-[var(--color-text-subtle)]" style="font-size: 70%">{{ product.code }}</span>
+                    <span
+                      class="ml-1.5 font-normal text-[var(--color-text-subtle)]"
+                      style="font-size: 70%"
+                      >{{ product.code }}</span
+                    >
                   }
                 </a>
               </td>
@@ -64,6 +77,11 @@
           }
         </tbody>
       </table>
+      <app-pagination
+        [meta]="meta()"
+        (pageChange)="goToPage($event)"
+        (limitChange)="changePageSize($event)"
+      />
     </div>
   }
 </div>

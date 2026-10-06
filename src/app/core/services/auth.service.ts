@@ -2,7 +2,7 @@ import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiSuccess, User } from '../models/user.model';
+import { ApiSuccess, User, UserRole } from '../models/user.model';
 
 const STORAGE_KEY = 'oerp.user';
 
@@ -14,6 +14,15 @@ export class AuthService {
   private readonly currentUserSignal = signal<User | null>(this.readStoredUser());
   readonly currentUser = this.currentUserSignal.asReadonly();
   readonly isAuthenticated = computed(() => this.currentUserSignal() !== null);
+  readonly role = computed<UserRole | null>(() => this.currentUserSignal()?.role ?? null);
+  readonly isAdmin = computed(() => this.role() === 'admin');
+  /** Vendor and sales staff only work the enquiry module (no delete / import). */
+  readonly isEnquiryOnly = computed(() => this.role() === 'vendor' || this.role() === 'sales');
+
+  hasRole(...roles: UserRole[]): boolean {
+    const role = this.role();
+    return role !== null && roles.includes(role);
+  }
 
   constructor(private readonly http: HttpClient) {}
 

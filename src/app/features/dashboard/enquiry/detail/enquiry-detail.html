@@ -1,35 +1,49 @@
-<div class="p-6 max-w-2xl mx-auto space-y-6">
-  <a routerLink="/dashboard/enquiries" class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+<div class="mx-auto max-w-2xl space-y-6 p-4 sm:p-6">
+  <a
+    routerLink="/dashboard/enquiries"
+    class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+  >
     ← Back to enquiries
   </a>
 
   @if (loading()) {
     <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Loading enquiry…</div>
   } @else if (notFound()) {
-    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Enquiry not found.</div>
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">
+      Enquiry not found.
+    </div>
   } @else if (enquiry(); as e) {
     @if (errorMessage()) {
-      <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+      <div
+        class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]"
+      >
         {{ errorMessage() }}
       </div>
     }
 
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-xl font-semibold">{{ e.name }}</h1>
-        <p class="text-sm text-[var(--color-text-muted)]">{{ e.phone }} @if (e.email) { · {{ e.email }} }</p>
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div class="min-w-0">
+        <h1 class="break-words text-xl font-semibold">{{ e.name }}</h1>
+        <p class="break-words text-sm text-[var(--color-text-muted)]">
+          {{ e.phone }}
+          @if (e.email) {
+            · {{ e.email }}
+          }
+        </p>
       </div>
       @if (!editing()) {
         <div class="flex items-center gap-2">
           <button type="button" class="btn-outline" (click)="startEdit()">Edit</button>
-          <button
-            type="button"
-            class="btn bg-[var(--color-danger-soft)] text-[var(--color-danger)] hover:bg-red-100"
-            [disabled]="deleting()"
-            (click)="remove()"
-          >
-            {{ deleting() ? 'Deleting…' : 'Delete' }}
-          </button>
+          @if (authService.isAdmin()) {
+            <button
+              type="button"
+              class="btn bg-[var(--color-danger-soft)] text-[var(--color-danger)] hover:bg-red-100"
+              [disabled]="deleting()"
+              (click)="remove()"
+            >
+              {{ deleting() ? 'Deleting…' : 'Delete' }}
+            </button>
+          }
         </div>
       }
     </div>
@@ -39,7 +53,7 @@
         @for (s of statuses; track s) {
           <button
             type="button"
-            class="px-3 py-1.5 rounded-full text-xs font-medium border disabled:opacity-50"
+            class="rounded-full border px-3 py-2 text-xs font-medium disabled:opacity-50 sm:py-1.5"
             [class]="
               e.status === s
                 ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)]'
@@ -54,9 +68,106 @@
       </div>
     </div>
 
+    <!-- Assignment -->
+    <div class="card p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="font-semibold text-sm">Assigned to</h2>
+          <p class="text-sm text-[var(--color-text-muted)] mt-0.5">
+            @if (e.assignedTo) {
+              {{ personName(e.assignedTo) }}
+              @if ($any(e.assignedTo).role) {
+                <span class="text-[var(--color-text-subtle)]"
+                  >({{ label($any(e.assignedTo).role) }})</span
+                >
+              }
+            } @else {
+              Nobody yet — only admins can see this lead.
+            }
+          </p>
+        </div>
+
+        @if (authService.isAdmin()) {
+          <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <select
+              class="input !w-auto !py-1.5 max-sm:!w-full"
+              aria-label="Assign this lead to"
+              [ngModel]="assigneeId()"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="assigneeId.set($event)"
+            >
+              <option value="">Unassigned</option>
+              @for (u of assignees(); track u._id) {
+                <option [value]="u._id">
+                  {{ u.firstName }} {{ u.lastName }} ({{ label(u.role) }})
+                </option>
+              }
+            </select>
+            <button
+              type="button"
+              class="btn-primary !py-1.5"
+              [disabled]="assigning() || assigneeId() === currentAssigneeId()"
+              (click)="assign()"
+            >
+              {{ assigning() ? 'Saving…' : 'Assign' }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Pending follow-up -->
+    @if (e.nextFollowUpAt; as due) {
+      <div
+        class="card p-5 space-y-3"
+        [class.border-[var(--color-danger)]]="followUpState(due) === 'overdue'"
+      >
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="font-semibold text-sm">Next follow-up</h2>
+            <p class="text-sm mt-0.5">{{ due | date: 'EEE, d MMM y · h:mm a' }}</p>
+          </div>
+          <span
+            [class]="
+              followUpState(due) === 'overdue'
+                ? 'badge bg-[var(--color-danger-soft)] text-[var(--color-danger)]'
+                : followUpState(due) === 'today'
+                  ? 'badge bg-amber-50 text-amber-700'
+                  : 'badge bg-[var(--color-primary-50)] text-[var(--color-primary-700)]'
+            "
+          >
+            {{
+              followUpState(due) === 'overdue'
+                ? 'Overdue'
+                : followUpState(due) === 'today'
+                  ? 'Due today'
+                  : 'Upcoming'
+            }}
+          </span>
+        </div>
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <input
+            class="input !py-1.5"
+            placeholder="How did it go? (optional)"
+            [ngModel]="outcomeText()"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="outcomeText.set($event)"
+          />
+          <button
+            type="button"
+            class="btn-primary !py-1.5 shrink-0"
+            [disabled]="completing()"
+            (click)="completeFollowUp()"
+          >
+            {{ completing() ? 'Saving…' : 'Mark done' }}
+          </button>
+        </div>
+      </div>
+    }
+
     @if (!editing()) {
       <div class="card p-5 space-y-4">
-        <div class="grid grid-cols-2 gap-4 text-sm">
+        <div class="grid grid-cols-2 gap-4 text-sm [overflow-wrap:anywhere]">
           @if (productName(e); as pn) {
             <div>
               <p class="text-[var(--color-text-muted)]">Product</p>
@@ -90,7 +201,7 @@
       @if (hasBusinessDetails(e)) {
         <div class="card p-5 space-y-4">
           <h2 class="font-semibold text-sm">Business details</h2>
-          <div class="grid grid-cols-2 gap-4 text-sm">
+          <div class="grid grid-cols-2 gap-4 text-sm [overflow-wrap:anywhere]">
             @if (e.category) {
               <div>
                 <p class="text-[var(--color-text-muted)]">Category</p>
@@ -112,7 +223,12 @@
             @if (e.website) {
               <div>
                 <p class="text-[var(--color-text-muted)]">Website</p>
-                <a [href]="e.website" target="_blank" rel="noopener" class="font-medium mt-0.5 block text-[var(--color-primary-600)] hover:underline truncate">
+                <a
+                  [href]="e.website"
+                  target="_blank"
+                  rel="noopener"
+                  class="font-medium mt-0.5 block text-[var(--color-primary-600)] hover:underline truncate"
+                >
                   {{ e.website }}
                 </a>
               </div>
@@ -141,7 +257,7 @@
     } @else {
       <form [formGroup]="form" (ngSubmit)="save()" novalidate class="space-y-6">
         <div class="card p-5 space-y-4">
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label class="label" for="edit-name">Name</label>
               <input id="edit-name" class="input" formControlName="name" />
@@ -158,9 +274,12 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label class="label" for="edit-email">Email <span class="text-[var(--color-text-subtle)] font-normal">(optional)</span></label>
+              <label class="label" for="edit-email"
+                >Email
+                <span class="text-[var(--color-text-subtle)] font-normal">(optional)</span></label
+              >
               <input id="edit-email" type="email" class="input" formControlName="email" />
               @if (form.controls.email.invalid && form.controls.email.touched) {
                 <p class="field-error">Enter a valid email address.</p>
@@ -183,7 +302,10 @@
           </div>
 
           <div>
-            <label class="label" for="edit-message">Message <span class="text-[var(--color-text-subtle)] font-normal">(optional)</span></label>
+            <label class="label" for="edit-message"
+              >Message
+              <span class="text-[var(--color-text-subtle)] font-normal">(optional)</span></label
+            >
             <textarea id="edit-message" class="input" rows="4" formControlName="message"></textarea>
             @if (form.controls.message.invalid && form.controls.message.touched) {
               <p class="field-error">Message needs at least 5 characters.</p>
@@ -203,10 +325,12 @@
         <div class="card p-5 space-y-4">
           <div>
             <h2 class="font-semibold">Lead details</h2>
-            <p class="text-xs text-[var(--color-text-muted)] mt-0.5">Optional context about the business this lead is for.</p>
+            <p class="text-xs text-[var(--color-text-muted)] mt-0.5">
+              Optional context about the business this lead is for.
+            </p>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label class="label" for="edit-category">Category</label>
               <select id="edit-category" class="input" formControlName="category">
@@ -218,7 +342,12 @@
             </div>
             <div>
               <label class="label" for="edit-subCategory">Sub-category</label>
-              <input id="edit-subCategory" class="input" formControlName="subCategory" list="editSubCategorySuggestions" />
+              <input
+                id="edit-subCategory"
+                class="input"
+                formControlName="subCategory"
+                list="editSubCategorySuggestions"
+              />
               <datalist id="editSubCategorySuggestions">
                 @for (s of subCategorySuggestions(); track s) {
                   <option [value]="s"></option>
@@ -227,7 +356,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label class="label" for="edit-firmName">Firm name</label>
               <input id="edit-firmName" class="input" formControlName="firmName" />
@@ -238,7 +367,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label class="label" for="edit-city">City</label>
               <input id="edit-city" class="input" formControlName="city" />
@@ -264,37 +393,130 @@
       </form>
     }
 
-    <div class="card p-5 space-y-4">
-      <h2 class="font-semibold text-sm">Internal notes</h2>
+    <!-- Remarks & activity -->
+    <div class="card p-5 space-y-5">
+      <h2 class="font-semibold text-sm">Remarks &amp; activity</h2>
 
-      @if (e.notes.length === 0) {
-        <p class="text-sm text-[var(--color-text-muted)]">No notes yet.</p>
-      } @else {
-        <div class="space-y-3">
-          @for (note of e.notes; track $index) {
-            <div class="rounded-[var(--radius-md)] bg-[var(--color-surface-alt)] px-3.5 py-2.5">
-              <p class="text-sm">{{ note.text }}</p>
-              <p class="text-xs text-[var(--color-text-subtle)] mt-1">
-                {{ noteAuthor(note) }} · {{ note.createdAt | slice: 0 : 10 }}
-              </p>
-            </div>
-          }
-        </div>
-      }
-
-      <div class="flex items-start gap-2">
+      <div class="space-y-3">
         <textarea
           class="input"
           rows="2"
-          placeholder="Add an internal note…"
+          placeholder="Add a remark about this lead…"
           [ngModel]="noteText()"
           [ngModelOptions]="{ standalone: true }"
           (ngModelChange)="noteText.set($event)"
         ></textarea>
-        <button type="button" class="btn-primary shrink-0" [disabled]="addingNote() || !noteText().trim()" (click)="addNote()">
-          {{ addingNote() ? 'Adding…' : 'Add' }}
+
+        <label class="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            [ngModel]="followUpEnabled()"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="followUpEnabled.set($event); followUpError.set('')"
+          />
+          Set a follow-up
+        </label>
+
+        @if (followUpEnabled()) {
+          <div class="flex flex-wrap items-center gap-2">
+            <input
+              type="datetime-local"
+              class="input !py-1.5 !w-auto"
+              aria-label="Follow-up date and time"
+              [min]="minFollowUp"
+              [ngModel]="followUpAt()"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="followUpAt.set($event); followUpError.set('')"
+            />
+            @for (preset of followUpPresets; track preset.label) {
+              <button
+                type="button"
+                class="px-2.5 py-1 rounded-full text-xs border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-alt)]"
+                (click)="pickFollowUpPreset(preset.value)"
+              >
+                {{ preset.label }}
+              </button>
+            }
+          </div>
+          @if (e.nextFollowUpAt) {
+            <p class="text-xs text-[var(--color-text-subtle)]">
+              This replaces the follow-up already scheduled for
+              {{ e.nextFollowUpAt | date: 'd MMM, h:mm a' }}.
+            </p>
+          }
+          @if (followUpError()) {
+            <p class="field-error">{{ followUpError() }}</p>
+          }
+        }
+
+        <button
+          type="button"
+          class="btn-primary"
+          [disabled]="addingNote() || !noteText().trim()"
+          (click)="addNote()"
+        >
+          {{
+            addingNote() ? 'Adding…' : followUpEnabled() ? 'Add remark & schedule' : 'Add remark'
+          }}
         </button>
       </div>
+
+      <ol class="space-y-4 border-t border-[var(--color-border)] pt-4">
+        @for (item of timeline(); track $index) {
+          <li class="flex gap-3">
+            <span
+              class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+              [class]="
+                item.kind === 'remark'
+                  ? 'bg-[var(--color-primary-500)]'
+                  : item.kind === 'followup_done'
+                    ? 'bg-[var(--color-success)]'
+                    : 'bg-[var(--color-text-subtle)]'
+              "
+            ></span>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm">
+                @if (item.kind === 'remark') {
+                  <span class="font-medium">{{ item.actor }}</span>
+                  <span class="text-[var(--color-text-muted)]"> added a remark</span>
+                } @else {
+                  <span class="font-medium">{{ item.title }}</span>
+                }
+              </p>
+              @if (item.body) {
+                <p
+                  class="mt-1 whitespace-pre-line text-sm"
+                  [class]="
+                    item.kind === 'remark'
+                      ? 'rounded-[var(--radius-md)] bg-[var(--color-surface-alt)] px-3.5 py-2.5'
+                      : 'text-[var(--color-text-muted)]'
+                  "
+                >
+                  {{ item.body }}
+                </p>
+              }
+              @if (item.kind === 'remark' && item.followUpAt) {
+                <p class="mt-1 text-xs text-[var(--color-primary-700)]">
+                  Follow-up set for {{ item.followUpAt | date: 'EEE, d MMM · h:mm a' }}
+                </p>
+              }
+              @if (item.kind === 'followup_done' && item.followUpAt) {
+                <p class="mt-0.5 text-xs text-[var(--color-text-subtle)]">
+                  Was due {{ item.followUpAt | date: 'd MMM, h:mm a' }}
+                </p>
+              }
+              <p class="mt-0.5 text-xs text-[var(--color-text-subtle)]">
+                @if (item.kind !== 'remark') {
+                  {{ item.actor }} ·
+                }
+                {{ item.at | date: 'd MMM y, h:mm a' }}
+              </p>
+            </div>
+          </li>
+        } @empty {
+          <li class="text-sm text-[var(--color-text-muted)]">No activity yet.</li>
+        }
+      </ol>
     </div>
   }
 </div>

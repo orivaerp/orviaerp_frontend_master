@@ -1,0 +1,83 @@
+@if (meta(); as m) {
+  <div
+    class="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] px-4 py-3 text-sm sm:px-5"
+  >
+    <div class="flex items-center gap-4 text-[var(--color-text-muted)]">
+      <span>
+        @if (m.total === 0) {
+          No results
+        } @else {
+          Showing <b class="text-[var(--color-text)]">{{ from() }}–{{ to() }}</b> of
+          <b class="text-[var(--color-text)]">{{ m.total }}</b>
+        }
+      </span>
+      <label class="flex items-center gap-2">
+        <span class="hidden sm:inline">Rows per page</span>
+        <select
+          class="input !w-auto !py-1 !px-2 text-xs"
+          [value]="m.limit"
+          [disabled]="disabled()"
+          (change)="setLimit($any($event.target).value)"
+          aria-label="Rows per page"
+        >
+          @for (size of pageSizes; track size) {
+            <option [value]="size" [selected]="size === m.limit">{{ size }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    @if (m.totalPages > 1) {
+      <nav class="flex items-center gap-1" aria-label="Pagination">
+        <button
+          type="button"
+          class="btn-ghost !px-3 !py-2 sm:!px-2.5 sm:!py-1.5"
+          [disabled]="disabled() || m.page === 1"
+          (click)="go(m.page - 1)"
+          aria-label="Previous page"
+        >
+          <app-icon name="chevron-down" [size]="14" class="rotate-90" />
+        </button>
+
+        @for (p of pages(); track $index) {
+          @if (p === '…') {
+            <span class="px-1.5 text-[var(--color-text-subtle)] max-sm:hidden">…</span>
+          } @else {
+            <button
+              type="button"
+              class="min-w-8 rounded-[var(--radius-md)] px-2.5 py-1.5 text-xs font-medium transition-colors max-sm:hidden"
+              [class]="
+                p === m.page
+                  ? 'bg-[var(--color-primary-500)] text-white'
+                  : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-alt)]'
+              "
+              [disabled]="disabled()"
+              [attr.aria-current]="p === m.page ? 'page' : null"
+              (click)="go(p)"
+            >
+              {{ p }}
+            </button>
+          }
+        }
+
+        <!-- Phones: a compact "page / pages" instead of the numbered buttons -->
+        <span
+          class="min-w-12 px-1 text-center text-xs text-[var(--color-text-muted)] sm:hidden"
+          aria-live="polite"
+        >
+          {{ m.page }} / {{ m.totalPages }}
+        </span>
+
+        <button
+          type="button"
+          class="btn-ghost !px-3 !py-2 sm:!px-2.5 sm:!py-1.5"
+          [disabled]="disabled() || m.page === m.totalPages"
+          (click)="go(m.page + 1)"
+          aria-label="Next page"
+        >
+          <app-icon name="chevron-down" [size]="14" class="-rotate-90" />
+        </button>
+      </nav>
+    }
+  </div>
+}

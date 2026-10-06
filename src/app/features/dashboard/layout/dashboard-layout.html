@@ -1,8 +1,21 @@
-<div class="h-screen flex flex-col bg-[var(--color-surface-alt)]">
+<div class="h-dvh flex flex-col bg-[var(--color-surface-alt)]">
   <!-- Top header -->
   <header class="h-14 shrink-0 flex items-center gap-4 bg-[var(--color-ink-900)] text-white px-4">
+    <button
+      type="button"
+      class="-ml-1 rounded-full p-2 text-white/80 hover:bg-white/10 lg:hidden"
+      [attr.aria-label]="drawerOpen() ? 'Close menu' : 'Open menu'"
+      [attr.aria-expanded]="drawerOpen()"
+      aria-controls="app-drawer"
+      (click)="toggleDrawer()"
+    >
+      <app-icon [name]="drawerOpen() ? 'close' : 'menu'" [size]="20" />
+    </button>
+
     <div class="flex items-center gap-2.5">
-      <div class="h-7 w-7 rounded-[var(--radius-sm)] bg-[var(--color-primary-500)] flex items-center justify-center text-xs font-bold">
+      <div
+        class="h-7 w-7 rounded-[var(--radius-sm)] bg-[var(--color-primary-500)] flex items-center justify-center text-xs font-bold"
+      >
         O
       </div>
       <span class="text-sm font-semibold tracking-tight hidden sm:inline">OERP</span>
@@ -19,7 +32,9 @@
         class="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 hover:bg-white/10"
         (click)="userMenuOpen.set(!userMenuOpen())"
       >
-        <div class="h-7 w-7 rounded-full bg-[var(--color-primary-400)] flex items-center justify-center text-xs font-semibold">
+        <div
+          class="h-7 w-7 rounded-full bg-[var(--color-primary-400)] flex items-center justify-center text-xs font-semibold"
+        >
           {{ (authService.currentUser()?.firstName || '?').charAt(0) | uppercase }}
         </div>
         <app-icon name="chevron-down" [size]="14" />
@@ -33,7 +48,9 @@
             <p class="text-sm font-medium truncate">
               {{ authService.currentUser()?.firstName }} {{ authService.currentUser()?.lastName }}
             </p>
-            <p class="text-xs text-[var(--color-text-muted)] truncate">{{ authService.currentUser()?.email }}</p>
+            <p class="text-xs text-[var(--color-text-muted)] truncate">
+              {{ authService.currentUser()?.email }}
+            </p>
           </div>
           <a
             routerLink="/dashboard/settings"
@@ -55,66 +72,92 @@
     </div>
   </header>
 
-  <div class="flex-1 flex min-h-0">
-    <!-- Icon rail -->
-    <nav class="w-[72px] shrink-0 bg-[var(--color-ink-900)] text-white/70 flex flex-col items-center gap-1 py-4">
-      @for (item of railItems; track item.label) {
-        <button
-          class="w-14 flex flex-col items-center gap-1 rounded-[var(--radius-md)] py-2.5 text-[10px] leading-tight transition-colors"
-          [class.bg-white/10]="activeSection() === item.section"
-          [class.text-white]="activeSection() === item.section"
-          [class.hover:bg-white/10]="activeSection() !== item.section"
-          [class.hover:text-white]="activeSection() !== item.section"
-          [title]="item.label"
-          (click)="selectSection(item)"
-        >
-          <app-icon [name]="item.icon" [size]="19" />
-          <span class="text-center">{{ item.label }}</span>
-        </button>
-      }
-    </nav>
+  <div class="relative flex-1 flex min-h-0">
+    <!-- Phone/tablet: dims the page behind the open drawer -->
+    @if (drawerOpen()) {
+      <div
+        class="fixed inset-x-0 bottom-0 top-14 z-30 bg-black/40 lg:hidden"
+        aria-hidden="true"
+        (click)="closeDrawer()"
+      ></div>
+    }
 
-    <!-- Secondary sidebar -->
-    <aside class="w-[260px] shrink-0 bg-white border-r border-[var(--color-border)] flex flex-col">
-      <div class="p-4 border-b border-[var(--color-border)]">
-        <div class="relative">
-          <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-subtle)]">
-            <app-icon name="search" [size]="15" />
-          </span>
-          <input
-            type="text"
-            placeholder="Search"
-            class="input !pl-8 !py-2"
-          />
+    <!-- Rail + sidebar. A slide-over drawer below lg; `lg:contents` makes this wrapper vanish on desktop,
+         so the layout there is exactly what it was. -->
+    <div
+      id="app-drawer"
+      class="fixed bottom-0 left-0 top-14 z-40 flex max-w-full transition-[transform,visibility] duration-200 ease-out lg:contents"
+      [class.-translate-x-full]="!drawerOpen()"
+      [class.max-lg:invisible]="!drawerOpen()"
+      [class.shadow-[var(--shadow-popover)]]="drawerOpen()"
+    >
+      <!-- Icon rail -->
+      <nav
+        class="w-[72px] shrink-0 bg-[var(--color-ink-900)] text-white/70 flex flex-col items-center gap-1 py-4 max-lg:overflow-y-auto"
+      >
+        @for (item of railItems(); track item.label) {
+          <button
+            class="w-14 flex flex-col items-center gap-1 rounded-[var(--radius-md)] py-2.5 text-[10px] leading-tight transition-colors"
+            [class.bg-white/10]="activeSection() === item.section"
+            [class.text-white]="activeSection() === item.section"
+            [class.hover:bg-white/10]="activeSection() !== item.section"
+            [class.hover:text-white]="activeSection() !== item.section"
+            [title]="item.label"
+            (click)="selectSection(item)"
+          >
+            <app-icon [name]="item.icon" [size]="19" />
+            <span class="text-center">{{ item.label }}</span>
+          </button>
+        }
+      </nav>
+
+      <!-- Secondary sidebar -->
+      <aside
+        class="w-[260px] max-w-[calc(100vw-72px)] shrink-0 bg-white border-r border-[var(--color-border)] flex flex-col"
+      >
+        <div class="p-4 border-b border-[var(--color-border)]">
+          <div class="relative">
+            <span
+              class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-subtle)]"
+            >
+              <app-icon name="search" [size]="15" />
+            </span>
+            <input type="text" placeholder="Search" class="input !pl-8 !py-2" />
+          </div>
         </div>
-      </div>
 
-      <div class="flex-1 overflow-y-auto py-2">
-        @for (item of navItems(); track item.label) {
-          @if (item.route) {
-            <a
-              [routerLink]="item.route"
-              routerLinkActive="bg-[var(--color-primary-50)] text-[var(--color-primary-700)] font-medium"
-              [routerLinkActiveOptions]="{ exact: true }"
-              class="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]"
-            >
-              <app-icon [name]="item.icon" [size]="17" />
-              {{ item.label }}
-            </a>
-          } @else {
-            <button
-              class="w-full flex items-center justify-between px-4 py-2.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]"
-            >
-              <span class="flex items-center gap-3">
+        <div class="flex-1 overflow-y-auto py-2">
+          @for (item of navItems(); track item.label) {
+            @if (item.route) {
+              <a
+                [routerLink]="item.route"
+                routerLinkActive="bg-[var(--color-primary-50)] text-[var(--color-primary-700)] font-medium"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]"
+                (click)="closeDrawer()"
+              >
                 <app-icon [name]="item.icon" [size]="17" />
                 {{ item.label }}
-              </span>
-              <app-icon name="chevron-down" [size]="14" class="-rotate-90 text-[var(--color-text-subtle)]" />
-            </button>
+              </a>
+            } @else {
+              <button
+                class="w-full flex items-center justify-between px-4 py-2.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]"
+              >
+                <span class="flex items-center gap-3">
+                  <app-icon [name]="item.icon" [size]="17" />
+                  {{ item.label }}
+                </span>
+                <app-icon
+                  name="chevron-down"
+                  [size]="14"
+                  class="-rotate-90 text-[var(--color-text-subtle)]"
+                />
+              </button>
+            }
           }
-        }
-      </div>
-    </aside>
+        </div>
+      </aside>
+    </div>
 
     <!-- Main content -->
     <main class="flex-1 overflow-y-auto">
@@ -122,3 +165,23 @@
     </main>
   </div>
 </div>
+
+@if (loggingOut()) {
+  <div
+    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
+    role="alertdialog"
+    aria-modal="true"
+    aria-live="assertive"
+    aria-label="Logging off"
+  >
+    <div class="card w-full max-w-xs p-6 text-center shadow-[var(--shadow-popover)]">
+      <div
+        class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-[3px] border-[var(--color-primary-100)] border-t-[var(--color-primary-500)]"
+      ></div>
+      <h2 class="text-lg font-semibold">Logging off…</h2>
+      <p class="mt-1 text-sm text-[var(--color-text-muted)]">
+        See you soon, {{ authService.currentUser()?.firstName }}.
+      </p>
+    </div>
+  </div>
+}

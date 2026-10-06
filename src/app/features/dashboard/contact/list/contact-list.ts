@@ -1,3 +1,5 @@
+import { Pagination } from '../../../../shared/components/pagination/pagination';
+import { DEFAULT_PAGE_SIZE, PageMeta } from '../../../../core/models/pagination.model';
 import { Component, inject, signal } from '@angular/core';
 import { SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -41,7 +43,7 @@ const STATUS_BADGE_CLASS: Record<ContactStatus, string> = {
 
 @Component({
   selector: 'app-contact-list',
-  imports: [RouterLink, SlicePipe, FormsModule],
+  imports: [Pagination, RouterLink, SlicePipe, FormsModule],
   templateUrl: './contact-list.html',
 })
 export class ContactList {
@@ -55,6 +57,9 @@ export class ContactList {
   readonly submissions = signal<ContactSubmission[]>([]);
   readonly stats = signal<ContactStats | null>(null);
   readonly loading = signal(true);
+  readonly page = signal(1);
+  readonly limit = signal(DEFAULT_PAGE_SIZE);
+  readonly meta = signal<PageMeta | null>(null);
   readonly errorMessage = signal('');
 
   readonly statusFilter = signal<ContactStatus | ''>('');
@@ -66,7 +71,7 @@ export class ContactList {
   readonly exporting = signal(false);
 
   constructor() {
-    this.load();
+    this.reload();
   }
 
   private currentFilter() {
@@ -79,14 +84,32 @@ export class ContactList {
     };
   }
 
-  private load(): void {
+  /** Filters changed (or first load): back to page 1, and refresh the stat cards. */
+  private reload(): void {
+    this.page.set(1);
+    this.loadPage();
+
+    this.contactService.getStats(this.currentFilter()).subscribe({
+      next: (res) => this.stats.set(res.data),
+      error: () => {},
+    });
+  }
+
+  private loadPage(): void {
     this.loading.set(true);
     this.errorMessage.set('');
-    const filter = this.currentFilter();
 
-    this.contactService.getAll(filter).subscribe({
+    this.contactService.getAll(this.currentFilter(), { page: this.page(), limit: this.limit() }).subscribe({
       next: (res) => {
+        const meta = res.meta ?? null;
+        // The page we asked for is past the end (rows were removed elsewhere) — step back.
+        if (meta && res.data.length === 0 && this.page() > 1) {
+          this.page.set(meta.totalPages);
+          this.loadPage();
+          return;
+        }
         this.submissions.set(res.data);
+        this.meta.set(meta);
         this.loading.set(false);
       },
       error: (err) => {
@@ -94,20 +117,26 @@ export class ContactList {
         this.loading.set(false);
       },
     });
+  }
 
-    this.contactService.getStats(filter).subscribe({
-      next: (res) => this.stats.set(res.data),
-      error: () => {},
-    });
+  goToPage(page: number): void {
+    this.page.set(page);
+    this.loadPage();
+  }
+
+  changePageSize(limit: number): void {
+    this.limit.set(limit);
+    this.page.set(1);
+    this.loadPage();
   }
 
   setStatusFilter(status: ContactStatus | ''): void {
     this.statusFilter.set(status);
-    this.load();
+    this.reload();
   }
 
   applyFilters(): void {
-    this.load();
+    this.reload();
   }
 
   clearFilters(): void {
@@ -116,7 +145,7 @@ export class ContactList {
     this.dateFrom.set('');
     this.dateTo.set('');
     this.search.set('');
-    this.load();
+    this.reload();
   }
 
   statusBadgeClass(status: ContactStatus): string {

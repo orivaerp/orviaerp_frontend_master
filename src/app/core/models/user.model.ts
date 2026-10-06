@@ -1,4 +1,6 @@
-export type UserRole = 'admin' | 'user' | 'vendor';
+import { PageMeta } from './pagination.model';
+
+export type UserRole = 'admin' | 'user' | 'vendor' | 'sales';
 export type UserStatus = 'active' | 'inactive' | 'blocked';
 
 export interface User {
@@ -17,6 +19,8 @@ export interface ApiSuccess<T> {
   success: true;
   message: string;
   data: T;
+  /** Present only on paginated list responses. */
+  meta?: PageMeta;
 }
 
 export interface ApiError {

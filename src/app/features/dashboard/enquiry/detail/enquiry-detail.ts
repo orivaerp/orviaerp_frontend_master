@@ -1,9 +1,20 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { SlicePipe } from '@angular/common';
+import { DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../../core/services/auth.service';
 import { EnquiryService } from '../../../../core/services/enquiry.service';
 import { ProductService } from '../../../../core/services/product.service';
+import { UserAdminService } from '../../../../core/services/user-admin.service';
+import { User } from '../../../../core/models/user.model';
+import {
+  buildTimeline,
+  followUpPresets,
+  followUpState,
+  personId,
+  personName,
+  toDateTimeLocal,
+} from '../shared/lead-activity';
 import { Product } from '../../../../core/models/product.model';
 import {
   ENQUIRY_CATEGORIES,
@@ -20,7 +31,7 @@ import { formatEnumLabel } from '../../../../shared/utils/format-label';
 
 @Component({
   selector: 'app-enquiry-detail',
-  imports: [RouterLink, FormsModule, ReactiveFormsModule, SlicePipe],
+  imports: [RouterLink, FormsModule, ReactiveFormsModule, SlicePipe, DatePipe],
   templateUrl: './enquiry-detail.html',
 })
 export class EnquiryDetail {
@@ -33,7 +44,9 @@ export class EnquiryDetail {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly enquiryService = inject(EnquiryService);
+  readonly authService = inject(AuthService);
   private readonly productService = inject(ProductService);
+  private readonly userAdminService = inject(UserAdminService);
   private readonly confirmDialog = inject(ConfirmDialogService);
 
   private readonly enquiryId = this.route.snapshot.paramMap.get('id') ?? '';
@@ -47,6 +60,31 @@ export class EnquiryDetail {
   readonly deleting = signal(false);
   readonly addingNote = signal(false);
   readonly noteText = signal('');
+
+  // Assignment (admin only)
+  readonly assignees = signal<User[]>([]);
+  readonly assigneeId = signal('');
+  readonly assigning = signal(false);
+  readonly currentAssigneeId = computed(() => personId(this.enquiry()?.assignedTo));
+
+  // Remark → optional follow-up
+  readonly followUpEnabled = signal(false);
+  readonly followUpAt = signal('');
+  readonly followUpError = signal('');
+  readonly followUpPresets = followUpPresets();
+  readonly minFollowUp = toDateTimeLocal(new Date());
+
+  // Pending follow-up → done
+  readonly outcomeText = signal('');
+  readonly completing = signal(false);
+
+  readonly timeline = computed(() => {
+    const enquiry = this.enquiry();
+    return enquiry ? buildTimeline(enquiry) : [];
+  });
+
+  readonly personName = personName;
+  readonly followUpState = followUpState;
 
   readonly editing = signal(false);
   readonly saving = signal(false);
@@ -70,11 +108,20 @@ export class EnquiryDetail {
 
   private readonly selectedCategory = signal<EnquiryCategory | ''>('');
   readonly subCategorySuggestions = computed(() =>
-    this.selectedCategory() ? ENQUIRY_SUBCATEGORY_SUGGESTIONS[this.selectedCategory() as EnquiryCategory] : []
+    this.selectedCategory()
+      ? ENQUIRY_SUBCATEGORY_SUGGESTIONS[this.selectedCategory() as EnquiryCategory]
+      : [],
   );
 
   constructor() {
     this.load();
+
+    if (this.authService.isAdmin()) {
+      this.userAdminService.getAll().subscribe({
+        next: (res) => this.assignees.set(res.data.filter((u) => u.status === 'active')),
+        error: () => {},
+      });
+    }
 
     this.productService.getAll().subscribe({
       next: (res) => this.products.set(res.data),
@@ -89,7 +136,7 @@ export class EnquiryDetail {
   private load(): void {
     this.enquiryService.getById(this.enquiryId).subscribe({
       next: (res) => {
-        this.enquiry.set(res.data);
+        this.applyEnquiry(res.data);
         this.loading.set(false);
       },
       error: (err) => {
@@ -101,6 +148,12 @@ export class EnquiryDetail {
         }
       },
     });
+  }
+
+  /** Single place that takes a fresh server copy, so the assignee dropdown never goes stale. */
+  private applyEnquiry(enquiry: Enquiry): void {
+    this.enquiry.set(enquiry);
+    this.assigneeId.set(personId(enquiry.assignedTo));
   }
 
   private idOf(ref: Enquiry['product']): string {
@@ -125,12 +178,6 @@ export class EnquiryDetail {
     );
   }
 
-  noteAuthor(note: Enquiry['notes'][number]): string {
-    if (!note.addedBy) return 'Someone';
-    if (typeof note.addedBy === 'string') return note.addedBy;
-    return `${note.addedBy.firstName} ${note.addedBy.lastName ?? ''}`.trim();
-  }
-
   setStatus(status: EnquiryStatus): void {
     const enquiry = this.enquiry();
     if (!enquiry || enquiry.status === status) return;
@@ -138,7 +185,7 @@ export class EnquiryDetail {
     this.updatingStatus.set(true);
     this.enquiryService.update(this.enquiryId, { status }).subscribe({
       next: (res) => {
-        this.enquiry.set(res.data);
+        this.applyEnquiry(res.data);
         this.updatingStatus.set(false);
       },
       error: (err) => {
@@ -206,7 +253,7 @@ export class EnquiryDetail {
       })
       .subscribe({
         next: (res) => {
-          this.enquiry.set(res.data);
+          this.applyEnquiry(res.data);
           this.saving.set(false);
           this.editing.set(false);
         },
@@ -217,22 +264,85 @@ export class EnquiryDetail {
       });
   }
 
+  assign(): void {
+    if (!this.authService.isAdmin() || this.assigning()) return;
+
+    this.assigning.set(true);
+    this.errorMessage.set('');
+    this.enquiryService
+      .update(this.enquiryId, { assignedTo: this.assigneeId() || null })
+      .subscribe({
+        next: (res) => {
+          this.applyEnquiry(res.data);
+          this.assigning.set(false);
+        },
+        error: (err) => {
+          this.assigning.set(false);
+          this.errorMessage.set(err?.error?.message ?? 'Could not assign this lead');
+        },
+      });
+  }
+
+  pickFollowUpPreset(value: string): void {
+    this.followUpEnabled.set(true);
+    this.followUpAt.set(value);
+    this.followUpError.set('');
+  }
+
   addNote(): void {
     const text = this.noteText().trim();
     if (!text) return;
 
+    let followUpIso: string | undefined;
+    if (this.followUpEnabled()) {
+      const picked = this.followUpAt();
+      const when = picked ? new Date(picked) : null;
+      if (!when || Number.isNaN(when.getTime())) {
+        this.followUpError.set('Pick a date and time for the follow-up.');
+        return;
+      }
+      if (when.getTime() < Date.now() - 60_000) {
+        this.followUpError.set('The follow-up needs to be in the future.');
+        return;
+      }
+      followUpIso = when.toISOString();
+    }
+    this.followUpError.set('');
+
     this.addingNote.set(true);
-    this.enquiryService.addNote(this.enquiryId, text).subscribe({
+    this.enquiryService.addNote(this.enquiryId, text, followUpIso).subscribe({
       next: (res) => {
-        this.enquiry.set(res.data);
+        this.applyEnquiry(res.data);
         this.noteText.set('');
+        this.followUpEnabled.set(false);
+        this.followUpAt.set('');
         this.addingNote.set(false);
       },
       error: (err) => {
         this.addingNote.set(false);
-        this.errorMessage.set(err?.error?.message ?? 'Could not add note');
+        this.errorMessage.set(err?.error?.message ?? 'Could not add remark');
       },
     });
+  }
+
+  completeFollowUp(): void {
+    if (this.completing()) return;
+
+    this.completing.set(true);
+    this.errorMessage.set('');
+    this.enquiryService
+      .completeFollowUp(this.enquiryId, this.outcomeText().trim() || undefined)
+      .subscribe({
+        next: (res) => {
+          this.applyEnquiry(res.data);
+          this.outcomeText.set('');
+          this.completing.set(false);
+        },
+        error: (err) => {
+          this.completing.set(false);
+          this.errorMessage.set(err?.error?.message ?? 'Could not mark the follow-up done');
+        },
+      });
   }
 
   async remove(): Promise<void> {

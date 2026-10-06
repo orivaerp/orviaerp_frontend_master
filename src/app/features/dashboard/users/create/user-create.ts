@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { UserAdminService } from '../../../../core/services/user-admin.service';
+import { UserRole } from '../../../../core/models/user.model';
 
 @Component({
   selector: 'app-user-create',
@@ -42,7 +43,7 @@ export class UserCreate {
         email: payload.email!,
         phone: payload.phone || undefined,
         password: payload.password!,
-        role: payload.role as 'admin' | 'user' | 'vendor',
+        role: payload.role as UserRole,
       })
       .subscribe({
         next: () => this.router.navigate(['/dashboard/users']),

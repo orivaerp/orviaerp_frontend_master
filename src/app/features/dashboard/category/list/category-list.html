@@ -2,7 +2,9 @@
   <div class="flex items-center justify-between">
     <div>
       <h1 class="text-2xl font-semibold">Categories</h1>
-      <p class="text-sm text-[var(--color-text-muted)] mt-1">Product/service categories, with optional sub and sub-sub levels.</p>
+      <p class="text-sm text-[var(--color-text-muted)] mt-1">
+        Product/service categories, with optional sub and sub-sub levels.
+      </p>
     </div>
     <a routerLink="/dashboard/categories/new" class="btn-primary">
       <app-icon name="plus" [size]="16" />
@@ -11,20 +13,28 @@
   </div>
 
   @if (errorMessage()) {
-    <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+    <div
+      class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]"
+    >
       {{ errorMessage() }}
     </div>
   }
 
   @if (loading()) {
-    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Loading categories…</div>
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">
+      Loading categories…
+    </div>
   } @else if (categories().length === 0) {
-    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">No categories yet.</div>
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">
+      No categories yet.
+    </div>
   } @else {
     <div class="card overflow-hidden">
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-text-muted)]">
+          <tr
+            class="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-text-muted)]"
+          >
             <th class="px-5 py-3 font-medium">Name</th>
             <th class="px-5 py-3 font-medium">Level</th>
             <th class="px-5 py-3 font-medium">Parent</th>
@@ -59,7 +69,10 @@
               </td>
               <td class="px-5 py-3 text-right">
                 <div class="flex items-center justify-end gap-3">
-                  <a [routerLink]="['/dashboard/categories', category._id]" class="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+                  <a
+                    [routerLink]="['/dashboard/categories', category._id]"
+                    class="text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                  >
                     Edit
                   </a>
                   <button

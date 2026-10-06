@@ -1,12 +1,15 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { UpperCasePipe } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs';
+import { filter, switchMap, timer } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../../core/services/auth.service';
 import { Icon } from '../../../shared/components/icon/icon';
+import { UserRole } from '../../../core/models/user.model';
 
-type Section = 'site' | 'blog' | 'users' | 'products' | 'enquiries' | 'contacts' | 'whatsapp';
+const LOGOUT_DELAY_MS = 2000;
+
+type Section ='site' | 'blog' | 'users' | 'products' | 'enquiries' | 'contacts' | 'whatsapp';
 
 interface RailItem {
   label: string;
@@ -82,6 +85,14 @@ const SECTION_ROOT: Record<Exclude<Section, 'site'>, string> = {
   whatsapp: '/dashboard/whatsapp',
 };
 
+/** Which sidebar modules each role may see. Keep in step with the route guards in app.routes.ts. */
+const SECTION_ROLES: Record<UserRole, Section[]> = {
+  admin: ['whatsapp', 'products', 'enquiries', 'contacts', 'blog', 'users', 'site'],
+  user: ['products', 'blog', 'site'],
+  vendor: ['enquiries'],
+  sales: ['enquiries'],
+};
+
 const SECTION_NAV: Record<Section, NavItem[]> = {
   site: SITE_NAV,
   blog: BLOG_NAV,
@@ -103,7 +114,23 @@ export class DashboardLayout {
 
   readonly userMenuOpen = signal(false);
 
-  readonly railItems: RailItem[] = [
+  /** Phone/tablet only: the rail + sidebar live in a slide-over drawer below the `lg` breakpoint. */
+  readonly drawerOpen = signal(false);
+
+  toggleDrawer(): void {
+    this.drawerOpen.update((open) => !open);
+  }
+
+  closeDrawer(): void {
+    this.drawerOpen.set(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.closeDrawer();
+  }
+
+  private readonly allRailItems: RailItem[] = [
     { label: 'WhatsApp', icon: 'message-circle', section: 'whatsapp' },
     { label: 'Products', icon: 'bag', section: 'products' },
     { label: 'Enquiries', icon: 'inbox', section: 'enquiries' },
@@ -115,6 +142,13 @@ export class DashboardLayout {
     { label: 'Marketing', icon: 'megaphone', section: 'site' },
     { label: 'Ecomm', icon: 'bag', section: 'site' },
   ];
+
+  /** Only the modules the signed-in role may open — vendor and sales see just Enquiries. */
+  readonly railItems = computed(() => {
+    const role = this.authService.role();
+    const allowed = role ? SECTION_ROLES[role] : [];
+    return this.allRailItems.filter((item) => allowed.includes(item.section));
+  });
 
   private readonly url = toSignal(
     this.router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)),
@@ -142,13 +176,26 @@ export class DashboardLayout {
     this.router.navigate([root]);
   }
 
+  readonly loggingOut = signal(false);
+
+  /** Shows the "Logging off" modal for 2s, then ends the session and goes to /login.
+   *  The API call waits until the modal has been up so the screen doesn't change underneath it. */
   logout(): void {
-    this.authService.logout().subscribe({
-      next: () => this.router.navigate(['/login']),
-      error: () => {
-        this.authService.clearUser();
-        this.router.navigate(['/login']);
-      },
-    });
+    if (this.loggingOut()) return;
+
+    this.userMenuOpen.set(false);
+    this.loggingOut.set(true);
+
+    const goToLogin = () => this.router.navigate(['/login']).then(() => this.loggingOut.set(false));
+
+    timer(LOGOUT_DELAY_MS)
+      .pipe(switchMap(() => this.authService.logout()))
+      .subscribe({
+        next: goToLogin,
+        error: () => {
+          this.authService.clearUser();
+          goToLogin();
+        },
+      });
   }
 }

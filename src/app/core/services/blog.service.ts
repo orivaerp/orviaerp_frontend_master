@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiSuccess } from '../models/user.model';
+import { PageParams, appendPageParams } from '../models/pagination.model';
 import { Blog, BlogStatus } from '../models/blog.model';
 
 export interface CreateBlogPayload {
@@ -24,8 +25,11 @@ export class BlogService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getAll(): Observable<ApiSuccess<Blog[]>> {
-    return this.http.get<ApiSuccess<Blog[]>>(this.baseUrl);
+  getAll(page?: PageParams): Observable<ApiSuccess<Blog[]>> {
+    const query = new URLSearchParams();
+    appendPageParams(query, page);
+    const qs = query.toString();
+    return this.http.get<ApiSuccess<Blog[]>>(qs ? `${this.baseUrl}?${qs}` : this.baseUrl);
   }
 
   getById(id: string): Observable<ApiSuccess<Blog>> {

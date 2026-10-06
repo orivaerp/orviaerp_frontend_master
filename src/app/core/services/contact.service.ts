@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiSuccess } from '../models/user.model';
+import { PageParams, appendPageParams } from '../models/pagination.model';
 import {
   ContactBudget,
   ContactService as ContactServiceType,
@@ -46,9 +47,10 @@ export interface ContactFilter {
   search?: string;
 }
 
-function toQueryString(filter?: ContactFilter): string {
-  if (!filter) return '';
+function toQueryString(filter?: ContactFilter, page?: PageParams): string {
   const params = new URLSearchParams();
+  appendPageParams(params, page);
+  if (!filter) return params.toString() ? '?' + params.toString() : '';
   if (filter.status) params.set('status', filter.status);
   if (filter.service) params.set('service', filter.service);
   if (filter.dateFrom) params.set('dateFrom', filter.dateFrom);
@@ -63,8 +65,8 @@ export class ContactService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/contacts`;
 
-  getAll(filter?: ContactFilter): Observable<ApiSuccess<ContactSubmission[]>> {
-    return this.http.get<ApiSuccess<ContactSubmission[]>>(`${this.baseUrl}${toQueryString(filter)}`);
+  getAll(filter?: ContactFilter, page?: PageParams): Observable<ApiSuccess<ContactSubmission[]>> {
+    return this.http.get<ApiSuccess<ContactSubmission[]>>(`${this.baseUrl}${toQueryString(filter, page)}`);
   }
 
   getStats(filter?: ContactFilter): Observable<ApiSuccess<ContactStats>> {

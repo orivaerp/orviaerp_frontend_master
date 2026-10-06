@@ -1,23 +1,49 @@
-<div class="p-6 max-w-6xl mx-auto space-y-6">
-  <div class="flex items-start justify-between gap-4">
+<div
+  class="mx-auto max-w-6xl space-y-6 p-4 sm:p-6"
+  [class.max-md:pb-28]="authService.isAdmin() && selectedCount() > 0"
+>
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
     <div>
-      <h1 class="text-2xl font-semibold">Enquiries</h1>
-      <p class="text-sm text-[var(--color-text-muted)] mt-1">Leads from the website, plus anything logged manually.</p>
+      <h1 class="text-2xl font-semibold">
+        {{ authService.isAdmin() ? 'Enquiries' : 'My leads' }}
+      </h1>
+      <p class="text-sm text-[var(--color-text-muted)] mt-1">
+        @if (authService.isAdmin()) {
+          Leads from the website, plus anything logged manually.
+        } @else {
+          The leads assigned to you.
+        }
+      </p>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <a routerLink="/dashboard/enquiries/new" class="btn-primary">+ Add lead</a>
       <button type="button" class="btn-outline" [disabled]="exporting()" (click)="exportCsv()">
         {{ exporting() ? 'Exporting…' : 'Export CSV' }}
       </button>
-      <button type="button" class="btn-outline" [disabled]="importing()" (click)="triggerImport()">
-        {{ importing() ? 'Importing…' : 'Import CSV' }}
-      </button>
-      <input #fileInput type="file" accept=".csv,text/csv" class="hidden" (change)="onImportFileSelected($event)" />
+      @if (authService.isAdmin()) {
+        <button
+          type="button"
+          class="btn-outline"
+          [disabled]="importing()"
+          (click)="triggerImport()"
+        >
+          {{ importing() ? 'Importing…' : 'Import CSV' }}
+        </button>
+        <input
+          #fileInput
+          type="file"
+          accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
+          class="hidden"
+          (change)="onImportFileSelected($event)"
+        />
+      }
     </div>
   </div>
 
   @if (importResult(); as result) {
-    <div class="rounded-[var(--radius-md)] bg-[var(--color-primary-50)] px-3.5 py-2.5 text-sm text-[var(--color-primary-700)]">
+    <div
+      class="rounded-[var(--radius-md)] bg-[var(--color-primary-50)] px-3.5 py-2.5 text-sm text-[var(--color-primary-700)]"
+    >
       Import complete — {{ result.created }} lead(s) created, {{ result.failed }} failed.
       @if (result.errors.length) {
         <ul class="mt-1.5 list-disc list-inside text-xs">
@@ -29,33 +55,105 @@
     </div>
   }
 
+  @if (bulkResult(); as r) {
+    <div
+      class="flex items-start justify-between gap-3 rounded-[var(--radius-md)] bg-[var(--color-success-soft)] px-3.5 py-2.5 text-sm text-[var(--color-success)]"
+      role="status"
+    >
+      <span>
+        {{ r.result.updated }} lead(s) assigned to {{ r.to }}.
+        @if (r.result.unchanged) {
+          {{ r.result.unchanged }} already had them.
+        }
+        @if (r.result.notFound) {
+          {{ r.result.notFound }} no longer exist.
+        }
+      </span>
+      <button type="button" class="text-xs underline" (click)="bulkResult.set(null)">
+        Dismiss
+      </button>
+    </div>
+  }
+
   @if (errorMessage()) {
-    <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+    <div
+      class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]"
+    >
       {{ errorMessage() }}
     </div>
   }
 
   <!-- Stat cards -->
-  <div class="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-    <div class="card p-4">
+  <div
+    class="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-8"
+  >
+    <div class="card min-w-[96px] shrink-0 p-4 sm:min-w-0">
       <p class="text-xs text-[var(--color-text-muted)]">Total</p>
       <p class="text-xl font-semibold mt-0.5">{{ stats()?.total ?? 0 }}</p>
     </div>
     @for (s of statusOptions.slice(1); track s.value) {
-      <div class="card p-4">
+      <div class="card min-w-[96px] shrink-0 p-4 sm:min-w-0">
         <p class="text-xs text-[var(--color-text-muted)]">{{ s.label }}</p>
         <p class="text-xl font-semibold mt-0.5">{{ statCount(s.value) }}</p>
       </div>
     }
   </div>
 
+  <!-- Follow-ups (click a card to filter) -->
+  @if (stats()?.followUps; as fu) {
+    <div class="grid grid-cols-3 gap-3">
+      @for (
+        card of [
+          {
+            key: 'overdue',
+            label: 'Follow-ups overdue',
+            short: 'Overdue',
+            count: fu.overdue,
+            tone: 'text-[var(--color-danger)]',
+          },
+          {
+            key: 'today',
+            label: 'Follow-ups due today',
+            short: 'Due today',
+            count: fu.today,
+            tone: 'text-amber-700',
+          },
+          {
+            key: 'upcoming',
+            label: 'Upcoming follow-ups',
+            short: 'Upcoming',
+            count: fu.upcoming,
+            tone: 'text-[var(--color-primary-700)]',
+          },
+        ];
+        track card.key
+      ) {
+        <button
+          type="button"
+          class="card p-3 text-left transition-colors sm:p-4"
+          [class.ring-2]="followUpFilter() === card.key"
+          [class.ring-[var(--color-primary-500)]]="followUpFilter() === card.key"
+          (click)="setFollowUpFilter($any(card.key))"
+        >
+          <p class="text-xs text-[var(--color-text-muted)]">
+            <span class="sm:hidden">{{ card.short }}</span>
+            <span class="hidden sm:inline">{{ card.label }}</span>
+          </p>
+          <p class="text-xl font-semibold mt-0.5" [class]="card.tone">{{ card.count }}</p>
+        </button>
+      }
+    </div>
+  }
+
   <!-- Filters -->
   <div class="card p-4 space-y-3">
-    <div class="flex flex-wrap items-center gap-2">
+    <div
+      class="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
+    >
       @for (opt of statusOptions; track opt.value) {
         <button
           type="button"
-          class="px-3 py-1.5 rounded-full text-xs font-medium border"
+          class="shrink-0 rounded-full border px-3 py-2 text-xs font-medium sm:py-1.5"
           [class]="
             statusFilter() === opt.value
               ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)]'
@@ -68,7 +166,24 @@
       }
     </div>
 
-    <div class="flex flex-wrap items-end gap-3">
+    <button
+      type="button"
+      class="btn-outline w-full !py-2 sm:hidden"
+      [attr.aria-expanded]="filtersOpen()"
+      (click)="filtersOpen.set(!filtersOpen())"
+    >
+      Filters
+      @if (activeFilterCount() > 0) {
+        <span class="badge bg-[var(--color-primary-600)] text-white">{{
+          activeFilterCount()
+        }}</span>
+      }
+    </button>
+
+    <div
+      class="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end"
+      [class.max-sm:hidden]="!filtersOpen()"
+    >
       <div>
         <label class="label !mb-1" for="sourceFilter">Source</label>
         <select
@@ -99,6 +214,42 @@
         </select>
       </div>
 
+      @if (authService.isAdmin()) {
+        <div>
+          <label class="label !mb-1" for="assigneeFilter">Assigned to</label>
+          <select
+            id="assigneeFilter"
+            class="input !py-1.5"
+            [ngModel]="assigneeFilter()"
+            (ngModelChange)="assigneeFilter.set($event); applyFilters()"
+          >
+            <option value="">Everyone</option>
+            <option value="unassigned">Unassigned</option>
+            @for (u of assignees(); track u._id) {
+              <option [value]="u._id">
+                {{ u.firstName }} {{ u.lastName }} ({{ label(u.role) }})
+              </option>
+            }
+          </select>
+        </div>
+      }
+
+      <div>
+        <label class="label !mb-1" for="followUpFilter">Follow-up</label>
+        <select
+          id="followUpFilter"
+          class="input !py-1.5"
+          [ngModel]="followUpFilter()"
+          (ngModelChange)="followUpFilter.set($event); applyFilters()"
+        >
+          <option value="">Any</option>
+          <option value="overdue">Overdue</option>
+          <option value="today">Due today</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="pending">Has a follow-up</option>
+        </select>
+      </div>
+
       <div>
         <label class="label !mb-1" for="dateFrom">From</label>
         <input
@@ -121,7 +272,7 @@
         />
       </div>
 
-      <div class="flex-1 min-w-[180px]">
+      <div class="col-span-2 min-w-[180px] flex-1 sm:col-span-1">
         <label class="label !mb-1" for="search">Search</label>
         <input
           id="search"
@@ -134,47 +285,257 @@
       </div>
 
       <button type="button" class="btn-outline !py-1.5" (click)="applyFilters()">Search</button>
-      <button type="button" class="btn-ghost !py-1.5" (click)="clearFilters()">Clear filters</button>
+      <button type="button" class="btn-ghost !py-1.5" (click)="clearFilters()">
+        Clear filters
+      </button>
     </div>
   </div>
 
   @if (loading()) {
-    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">Loading enquiries…</div>
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">
+      Loading enquiries…
+    </div>
   } @else if (enquiries().length === 0) {
-    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">No enquiries match these filters.</div>
+    <div class="card p-8 text-center text-sm text-[var(--color-text-muted)]">
+      No enquiries match these filters.
+    </div>
   } @else {
+    @if (authService.isAdmin() && selectedCount() > 0) {
+      <div
+        class="card flex flex-wrap items-center gap-3 border-[var(--color-primary-500)] bg-[var(--color-primary-50)] p-3 max-md:fixed max-md:inset-x-3 max-md:bottom-3 max-md:z-30 max-md:shadow-[var(--shadow-popover)]"
+        role="region"
+        aria-label="Bulk actions"
+      >
+        <span class="text-sm font-medium">{{ selectedCount() }} selected</span>
+
+        <select
+          class="input !w-auto !py-1.5 max-sm:!w-full"
+          aria-label="Assign selected leads to"
+          [ngModel]="bulkAssigneeId()"
+          (ngModelChange)="bulkAssigneeId.set($event)"
+        >
+          <option value="">Unassigned (remove assignee)</option>
+          @for (u of assignees(); track u._id) {
+            <option [value]="u._id">
+              {{ u.firstName }} {{ u.lastName }} ({{ label(u.role) }})
+            </option>
+          }
+        </select>
+
+        <button
+          type="button"
+          class="btn-primary !py-1.5"
+          [disabled]="bulkAssigning()"
+          (click)="assignSelected()"
+        >
+          {{ bulkAssigning() ? 'Assigning…' : 'Assign selected' }}
+        </button>
+        <button
+          type="button"
+          class="btn-ghost !py-1.5"
+          [disabled]="bulkAssigning()"
+          (click)="clearSelection()"
+        >
+          Clear selection
+        </button>
+
+        @if (moreThanThisPage()) {
+          <span class="basis-full text-xs text-[var(--color-text-muted)]">
+            Only the {{ selectedCount() }} leads on this page are selected (of
+            {{ meta()?.total }} in total). Raise "Rows per page" to 100 to select more at once.
+          </span>
+        }
+      </div>
+    }
+
     <div class="card overflow-hidden">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-text-muted)]">
-            <th class="px-5 py-3 font-medium">From</th>
-            <th class="px-5 py-3 font-medium">Message</th>
-            <th class="px-5 py-3 font-medium">Source</th>
-            <th class="px-5 py-3 font-medium">Category</th>
-            <th class="px-5 py-3 font-medium">Status</th>
-            <th class="px-5 py-3 font-medium">Received</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-[var(--color-border)]">
-          @for (enquiry of enquiries(); track enquiry._id) {
-            <tr class="hover:bg-[var(--color-surface-alt)]">
-              <td class="px-5 py-3">
-                <a [routerLink]="['/dashboard/enquiries', enquiry._id]" class="font-medium hover:text-[var(--color-primary-600)] hover:underline">
+      <!-- Phones: one card per lead -->
+      <ul class="divide-y divide-[var(--color-border)] md:hidden">
+        @if (authService.isAdmin()) {
+          <li
+            class="flex items-center gap-3 bg-[var(--color-surface-alt)] px-4 py-2.5 text-xs text-[var(--color-text-muted)]"
+          >
+            <input
+              id="select-all-mobile"
+              type="checkbox"
+              [checked]="allOnPageSelected()"
+              (change)="toggleAllOnPage()"
+            />
+            <label for="select-all-mobile">Select all on this page</label>
+          </li>
+        }
+        @for (enquiry of enquiries(); track enquiry._id) {
+          <li
+            class="flex gap-3 p-4"
+            [class.bg-[var(--color-primary-50)]]="authService.isAdmin() && isSelected(enquiry._id)"
+          >
+            @if (authService.isAdmin()) {
+              <input
+                type="checkbox"
+                class="mt-0.5 shrink-0"
+                [attr.aria-label]="'Select ' + enquiry.name"
+                [checked]="isSelected(enquiry._id)"
+                (change)="toggleRow(enquiry._id)"
+              />
+            }
+            <div class="min-w-0 flex-1 space-y-1.5">
+              <div class="flex items-start justify-between gap-2">
+                <a
+                  [routerLink]="['/dashboard/enquiries', enquiry._id]"
+                  class="min-w-0 break-words font-medium hover:text-[var(--color-primary-600)]"
+                >
                   {{ enquiry.name }}
                 </a>
-                <p class="text-xs text-[var(--color-text-muted)]">{{ enquiry.phone }}@if (enquiry.email) { &nbsp;·&nbsp;{{ enquiry.email }} }</p>
-              </td>
-              <td class="px-5 py-3 text-[var(--color-text-muted)] max-w-md truncate">{{ enquiry.message || '—' }}</td>
-              <td class="px-5 py-3 text-[var(--color-text-muted)]">{{ label(enquiry.source) }}</td>
-              <td class="px-5 py-3 text-[var(--color-text-muted)]">{{ enquiry.category ? label(enquiry.category) : '—' }}</td>
-              <td class="px-5 py-3">
-                <span [class]="statusBadgeClass(enquiry.status)">{{ label(enquiry.status) }}</span>
-              </td>
-              <td class="px-5 py-3 text-[var(--color-text-muted)]">{{ enquiry.createdAt | slice: 0 : 10 }}</td>
+                <span class="shrink-0" [class]="statusBadgeClass(enquiry.status)">{{
+                  label(enquiry.status)
+                }}</span>
+              </div>
+              <p class="break-words text-xs text-[var(--color-text-muted)]">
+                <a [href]="'tel:' + enquiry.phone" class="hover:underline">{{ enquiry.phone }}</a>
+                @if (enquiry.email) {
+                  · {{ enquiry.email }}
+                }
+              </p>
+              @if (enquiry.message) {
+                <p class="line-clamp-2 text-sm text-[var(--color-text-muted)]">
+                  {{ enquiry.message }}
+                </p>
+              }
+              <p class="text-xs text-[var(--color-text-muted)]">
+                {{ label(enquiry.source) }}
+                @if (enquiry.category) {
+                  · {{ label(enquiry.category) }}
+                }
+              </p>
+              <div class="flex flex-wrap items-center gap-2 text-xs">
+                @if (authService.isAdmin()) {
+                  <span class="text-[var(--color-text-muted)]">
+                    {{
+                      enquiry.assignedTo
+                        ? 'Assigned to ' + personName(enquiry.assignedTo)
+                        : 'Unassigned'
+                    }}
+                  </span>
+                }
+                @if (enquiry.nextFollowUpAt; as due) {
+                  <span [class]="followUpBadgeClass(followUpState(due))">
+                    {{ due | date: 'd MMM, h:mm a' }}
+                  </span>
+                }
+              </div>
+              <p class="text-[10px] leading-tight text-[var(--color-text-subtle)]">
+                {{ enquiry.createdAt | slice: 0 : 10 }} · Created by {{ createdByName(enquiry) }}
+              </p>
+            </div>
+          </li>
+        }
+      </ul>
+
+      <!-- Tablet & desktop: the table (scrolls sideways instead of clipping when narrow) -->
+      <div class="hidden overflow-x-auto md:block">
+        <table class="w-full min-w-[860px] text-sm">
+          <thead>
+            <tr
+              class="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-text-muted)]"
+            >
+              @if (authService.isAdmin()) {
+                <th class="w-10 px-5 py-3">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all leads on this page"
+                    [checked]="allOnPageSelected()"
+                    (change)="toggleAllOnPage()"
+                  />
+                </th>
+              }
+              <th class="px-5 py-3 font-medium">From</th>
+              <th class="px-5 py-3 font-medium">Message</th>
+              <th class="px-5 py-3 font-medium">Source</th>
+              <th class="px-5 py-3 font-medium">Category</th>
+              <th class="px-5 py-3 font-medium">Status</th>
+              @if (authService.isAdmin()) {
+                <th class="px-5 py-3 font-medium">Assigned to</th>
+              }
+              <th class="px-5 py-3 font-medium">Follow-up</th>
+              <th class="px-5 py-3 font-medium">Received</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody class="divide-y divide-[var(--color-border)]">
+            @for (enquiry of enquiries(); track enquiry._id) {
+              <tr
+                class="hover:bg-[var(--color-surface-alt)]"
+                [class.bg-[var(--color-primary-50)]]="
+                  authService.isAdmin() && isSelected(enquiry._id)
+                "
+              >
+                @if (authService.isAdmin()) {
+                  <td class="w-10 px-5 py-3">
+                    <input
+                      type="checkbox"
+                      [attr.aria-label]="'Select ' + enquiry.name"
+                      [checked]="isSelected(enquiry._id)"
+                      (change)="toggleRow(enquiry._id)"
+                    />
+                  </td>
+                }
+                <td class="px-5 py-3">
+                  <a
+                    [routerLink]="['/dashboard/enquiries', enquiry._id]"
+                    class="font-medium hover:text-[var(--color-primary-600)] hover:underline"
+                  >
+                    {{ enquiry.name }}
+                  </a>
+                  <p class="text-xs text-[var(--color-text-muted)]">
+                    {{ enquiry.phone }}
+                    @if (enquiry.email) {
+                      &nbsp;·&nbsp;{{ enquiry.email }}
+                    }
+                  </p>
+                </td>
+                <td class="px-5 py-3 text-[var(--color-text-muted)] max-w-md truncate">
+                  {{ enquiry.message || '—' }}
+                </td>
+                <td class="px-5 py-3 text-[var(--color-text-muted)]">
+                  {{ label(enquiry.source) }}
+                </td>
+                <td class="px-5 py-3 text-[var(--color-text-muted)]">
+                  {{ enquiry.category ? label(enquiry.category) : '—' }}
+                </td>
+                <td class="px-5 py-3">
+                  <span [class]="statusBadgeClass(enquiry.status)">{{
+                    label(enquiry.status)
+                  }}</span>
+                </td>
+                @if (authService.isAdmin()) {
+                  <td class="px-5 py-3 text-[var(--color-text-muted)]">
+                    {{ personName(enquiry.assignedTo, 'Unassigned') }}
+                  </td>
+                }
+                <td class="px-5 py-3">
+                  @if (enquiry.nextFollowUpAt; as due) {
+                    <span [class]="followUpBadgeClass(followUpState(due))">
+                      {{ due | date: 'd MMM, h:mm a' }}
+                    </span>
+                  } @else {
+                    <span class="text-[var(--color-text-subtle)]">—</span>
+                  }
+                </td>
+                <td class="px-5 py-3 text-[var(--color-text-muted)]">
+                  {{ enquiry.createdAt | slice: 0 : 10 }}
+                  <p class="text-[10px] leading-tight text-[var(--color-text-subtle)]">
+                    Created by {{ createdByName(enquiry) }}
+                  </p>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-pagination
+        [meta]="meta()"
+        (pageChange)="goToPage($event)"
+        (limitChange)="changePageSize($event)"
+      />
     </div>
   }
 </div>

@@ -52,11 +52,39 @@ export const ENQUIRY_SUBCATEGORY_SUGGESTIONS: Record<EnquiryCategory, string[]> 
   portfolio: ['Personal Portfolio', 'Agency Portfolio', 'Freelancer Portfolio', 'Photography Portfolio'],
 };
 
+/** A populated user reference (assignee, author, actor …) — or just the id if not populated. */
+export interface UserRef {
+  _id: string;
+  firstName: string;
+  lastName?: string;
+  email?: string;
+  role?: string;
+}
+
 export interface EnquiryNote {
   text: string;
-  addedBy?: { _id: string; firstName: string; lastName?: string } | string;
+  addedBy?: UserRef | string;
+  /** Set when the remark also scheduled a follow-up. */
+  followUpAt?: string;
   createdAt: string;
 }
+
+export type EnquiryActivityType = 'created' | 'assigned' | 'status_changed' | 'followup_done';
+
+/** System-recorded event on a lead. Remarks live in `notes`; the timeline merges both. */
+export interface EnquiryActivity {
+  type: EnquiryActivityType;
+  actor?: UserRef | string | null;
+  at: string;
+  statusFrom?: string;
+  statusTo?: string;
+  assignedFrom?: UserRef | string | null;
+  assignedTo?: UserRef | string | null;
+  followUpAt?: string;
+  text?: string;
+}
+
+export type FollowUpFilter = 'overdue' | 'today' | 'upcoming' | 'pending';
 
 export interface Enquiry {
   _id: string;
@@ -75,8 +103,15 @@ export interface Enquiry {
   address?: string;
   state?: string;
   status: EnquiryStatus;
-  assignedTo?: { _id: string; firstName: string; lastName?: string } | string | null;
+  /** Only an admin can set this; staff see just the leads assigned to them. */
+  assignedTo?: UserRef | string | null;
+  /** Staff member who added it from the admin panel; absent for public form submissions. */
+  createdBy?: UserRef | string | null;
+  /** The one pending follow-up, if any. */
+  nextFollowUpAt?: string;
   notes: EnquiryNote[];
+  /** Only on the single-lead response, not in lists. */
+  activities?: EnquiryActivity[];
   createdAt: string;
   updatedAt?: string;
 }
@@ -85,4 +120,5 @@ export interface EnquiryStats {
   total: number;
   byStatus: Record<EnquiryStatus, number>;
   bySource: Record<EnquirySource, number>;
+  followUps?: { overdue: number; today: number; upcoming: number };
 }

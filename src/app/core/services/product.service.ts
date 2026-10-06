@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiSuccess } from '../models/user.model';
+import { PageParams, appendPageParams } from '../models/pagination.model';
 import { Product, ProductAddon, ProductFaq, ProductPlan, ProductSeo, PricingType, ProductStatus } from '../models/product.model';
 
 export interface ProductPayload {
@@ -40,8 +41,12 @@ export class ProductService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/products`;
 
-  getAll(params?: { category?: string; subCategory?: string; status?: string }): Observable<ApiSuccess<Product[]>> {
+  getAll(
+    params?: { category?: string; subCategory?: string; status?: string },
+    page?: PageParams
+  ): Observable<ApiSuccess<Product[]>> {
     const query = new URLSearchParams();
+    appendPageParams(query, page);
     if (params?.category) query.set('category', params.category);
     if (params?.subCategory) query.set('subCategory', params.subCategory);
     if (params?.status) query.set('status', params.status);

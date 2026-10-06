@@ -1,143 +1,295 @@
-<div class="p-6 max-w-2xl mx-auto space-y-6">
+<div class="mx-auto max-w-2xl space-y-6 p-4 sm:p-6">
   <div>
-    <a routerLink="/dashboard/enquiries" class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+    <a
+      routerLink="/dashboard/enquiries"
+      class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+    >
       ← Back to enquiries
     </a>
     <h1 class="text-2xl font-semibold mt-2">Add lead</h1>
-    <p class="text-sm text-[var(--color-text-muted)] mt-1">Manually log a lead that came in outside the website form — a call, a walk-in, an event, etc.</p>
+    <p class="text-sm text-[var(--color-text-muted)] mt-1">
+      Manually log a lead that came in outside the website form — a call, a walk-in, an event, etc.
+    </p>
   </div>
 
   @if (errorMessage()) {
-    <div class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+    <div
+      class="rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]"
+    >
       {{ errorMessage() }}
+    </div>
+  }
+
+  @if (authService.isAdmin()) {
+    <div class="card p-5 space-y-3">
+      <div class="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h2 class="font-semibold">Import leads from CSV</h2>
+          <p class="text-xs text-[var(--color-text-muted)] mt-0.5">
+            Adding many at once? Upload a CSV instead of filling the form. Admin only.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" class="btn-outline" (click)="downloadSampleCsv()">
+            Download sample CSV
+          </button>
+          <button
+            type="button"
+            class="btn-primary"
+            [disabled]="importing()"
+            (click)="csvInput.click()"
+          >
+            {{ importing() ? 'Importing…' : 'Import CSV' }}
+          </button>
+          <input
+            #csvInput
+            type="file"
+            accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
+            class="hidden"
+            (change)="onImportFileSelected($event)"
+          />
+        </div>
+      </div>
+
+      <details class="text-xs text-[var(--color-text-muted)]">
+        <summary class="cursor-pointer">CSV format</summary>
+        <ul class="mt-2 space-y-1 list-disc pl-5">
+          <li>First row must be the header: {{ importHeaders.join(', ') }}.</li>
+          <li>Comma, tab or semicolon separated all work (so a sheet saved from Excel is fine).</li>
+          <li><b>Name</b> and <b>Phone</b> are required; rows missing either are skipped.</li>
+          <li>Source: {{ importAllowed.source.join(', ') }} (anything else becomes "other").</li>
+          <li>Status: {{ importAllowed.status.join(', ') }}.</li>
+          <li>Category: {{ importAllowed.category.join(', ') }}.</li>
+          <li>
+            Capitals and spaces are fine ("Walk-in", "In Progress", "Health"). Wrap text containing
+            the separator or line breaks in double quotes.
+          </li>
+        </ul>
+      </details>
+
+      @if (importError()) {
+        <p class="error-text">{{ importError() }}</p>
+      }
+      @if (importResult(); as result) {
+        <div
+          class="rounded-[var(--radius-md)] bg-[var(--color-success-soft)] px-3.5 py-2.5 text-sm text-[var(--color-success)]"
+        >
+          Import complete — {{ result.created }} lead(s) created, {{ result.failed }} failed.
+        </div>
+        @if (result.errors.length) {
+          <ul class="text-xs text-[var(--color-danger)] space-y-0.5 max-h-32 overflow-y-auto">
+            @for (e of result.errors; track e.row) {
+              <li>Row {{ e.row }}: {{ e.message }}</li>
+            }
+          </ul>
+        }
+      }
     </div>
   }
 
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="space-y-6">
     <div class="card p-5 space-y-4">
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="label" for="name">Name</label>
-        <input id="name" class="input" formControlName="name" placeholder="Jordan Smith" />
-        @if (form.controls.name.invalid && form.controls.name.touched) {
-          <p class="field-error">Name needs at least 2 characters.</p>
-        }
-      </div>
-      <div>
-        <label class="label" for="phone">Phone</label>
-        <input id="phone" class="input" formControlName="phone" placeholder="9876543210" />
-        @if (form.controls.phone.invalid && form.controls.phone.touched) {
-          <p class="field-error">Phone number is required.</p>
-        }
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="label" for="email">Email <span class="text-[var(--color-text-subtle)] font-normal">(optional)</span></label>
-        <input id="email" type="email" class="input" formControlName="email" placeholder="jordan@example.com" />
-        @if (form.controls.email.invalid && form.controls.email.touched) {
-          <p class="field-error">Enter a valid email address.</p>
-        }
-      </div>
-      <div>
-        <label class="label" for="product">Product / service</label>
-        <select id="product" class="input" formControlName="product">
-          <option value="">— None —</option>
-          @for (p of products(); track p._id) {
-            <option [value]="p._id">{{ p.name }}</option>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label class="label" for="name">Name</label>
+          <input id="name" class="input" formControlName="name" placeholder="Jordan Smith" />
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+            <p class="field-error">Name needs at least 2 characters.</p>
           }
-        </select>
+        </div>
+        <div>
+          <label class="label" for="phone">Phone</label>
+          <input id="phone" class="input" formControlName="phone" placeholder="9876543210" />
+          @if (form.controls.phone.invalid && form.controls.phone.touched) {
+            <p class="field-error">Phone number is required.</p>
+          }
+        </div>
       </div>
-    </div>
 
-    <div>
-      <label class="label" for="subject">Subject</label>
-      <input id="subject" class="input" formControlName="subject" placeholder="What's this about?" />
-    </div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label class="label" for="email"
+            >Email
+            <span class="text-[var(--color-text-subtle)] font-normal">(optional)</span></label
+          >
+          <input
+            id="email"
+            type="email"
+            class="input"
+            formControlName="email"
+            placeholder="jordan@example.com"
+          />
+          @if (form.controls.email.invalid && form.controls.email.touched) {
+            <p class="field-error">Enter a valid email address.</p>
+          }
+        </div>
+        <div>
+          <label class="label" for="product">Product / service</label>
+          <select id="product" class="input" formControlName="product">
+            <option value="">— None —</option>
+            @for (p of products(); track p._id) {
+              <option [value]="p._id">{{ p.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
 
-    <div>
-      <label class="label" for="message">Message <span class="text-[var(--color-text-subtle)] font-normal">(optional)</span></label>
-      <textarea id="message" class="input" rows="4" formControlName="message" placeholder="Notes from the conversation…"></textarea>
-      @if (form.controls.message.invalid && form.controls.message.touched) {
-        <p class="field-error">Message needs at least 5 characters.</p>
+      <div>
+        <label class="label" for="subject">Subject</label>
+        <input
+          id="subject"
+          class="input"
+          formControlName="subject"
+          placeholder="What's this about?"
+        />
+      </div>
+
+      <div>
+        <label class="label" for="message"
+          >Message
+          <span class="text-[var(--color-text-subtle)] font-normal">(optional)</span></label
+        >
+        <textarea
+          id="message"
+          class="input"
+          rows="4"
+          formControlName="message"
+          placeholder="Notes from the conversation…"
+        ></textarea>
+        @if (form.controls.message.invalid && form.controls.message.touched) {
+          <p class="field-error">Message needs at least 5 characters.</p>
+        }
+      </div>
+
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label class="label" for="source">Source</label>
+          <select id="source" class="input" formControlName="source">
+            @for (s of sources; track s) {
+              <option [value]="s">{{ label(s) }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="label" for="status">Status</label>
+          <select id="status" class="input" formControlName="status">
+            @for (s of statuses; track s) {
+              <option [value]="s">{{ label(s) }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (authService.isAdmin()) {
+        <div>
+          <label class="label" for="assignedTo">Assign to</label>
+          <select id="assignedTo" class="input" formControlName="assignedTo">
+            <option value="">Leave unassigned (only admins will see it)</option>
+            @for (u of assignees(); track u._id) {
+              <option [value]="u._id">
+                {{ u.firstName }} {{ u.lastName }} ({{ label(u.role) }})
+              </option>
+            }
+          </select>
+        </div>
+      } @else {
+        <p class="text-xs text-[var(--color-text-muted)]">
+          This lead will be assigned to you, so it shows up in your list.
+        </p>
       }
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="label" for="source">Source</label>
-        <select id="source" class="input" formControlName="source">
-          @for (s of sources; track s) {
-            <option [value]="s">{{ label(s) }}</option>
-          }
-        </select>
-      </div>
-      <div>
-        <label class="label" for="status">Status</label>
-        <select id="status" class="input" formControlName="status">
-          @for (s of statuses; track s) {
-            <option [value]="s">{{ label(s) }}</option>
-          }
-        </select>
-      </div>
-    </div>
     </div>
 
     <!-- Lead details (all optional) -->
     <div class="card p-5 space-y-4">
-    <div>
-      <h2 class="font-semibold">Lead details</h2>
-      <p class="text-xs text-[var(--color-text-muted)] mt-0.5">Optional context about the business this lead is for.</p>
-    </div>
+      <div>
+        <h2 class="font-semibold">Lead details</h2>
+        <p class="text-xs text-[var(--color-text-muted)] mt-0.5">
+          Optional context about the business this lead is for.
+        </p>
+      </div>
 
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="label" for="category">Category</label>
-        <select id="category" class="input" formControlName="category">
-          <option value="">— None —</option>
-          @for (c of categories; track c) {
-            <option [value]="c">{{ label(c) }}</option>
-          }
-        </select>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label class="label" for="category">Category</label>
+          <select id="category" class="input" formControlName="category">
+            <option value="">— None —</option>
+            @for (c of categories; track c) {
+              <option [value]="c">{{ label(c) }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="label" for="subCategory">Sub-category</label>
+          <input
+            id="subCategory"
+            class="input"
+            formControlName="subCategory"
+            list="subCategorySuggestions"
+            placeholder="e.g. Clinic"
+          />
+          <datalist id="subCategorySuggestions">
+            @for (s of subCategorySuggestions(); track s) {
+              <option [value]="s"></option>
+            }
+          </datalist>
+        </div>
       </div>
-      <div>
-        <label class="label" for="subCategory">Sub-category</label>
-        <input id="subCategory" class="input" formControlName="subCategory" list="subCategorySuggestions" placeholder="e.g. Clinic" />
-        <datalist id="subCategorySuggestions">
-          @for (s of subCategorySuggestions(); track s) {
-            <option [value]="s"></option>
-          }
-        </datalist>
-      </div>
-    </div>
 
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="label" for="firmName">Firm name</label>
-        <input id="firmName" class="input" formControlName="firmName" placeholder="Business / firm name" />
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label class="label" for="firmName">Firm name</label>
+          <input
+            id="firmName"
+            class="input"
+            formControlName="firmName"
+            placeholder="Business / firm name"
+          />
+        </div>
+        <div>
+          <label class="label" for="website">Website</label>
+          <input id="website" class="input" formControlName="website" placeholder="https://…" />
+        </div>
       </div>
-      <div>
-        <label class="label" for="website">Website</label>
-        <input id="website" class="input" formControlName="website" placeholder="https://…" />
-      </div>
-    </div>
 
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="label" for="city">City</label>
-        <input id="city" class="input" formControlName="city" />
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label class="label" for="city">City</label>
+          <input
+            id="city"
+            class="input"
+            formControlName="city"
+            list="cityOptions"
+            autocomplete="off"
+            placeholder="Start typing…"
+          />
+          <datalist id="cityOptions">
+            @for (c of cities; track c) {
+              <option [value]="c"></option>
+            }
+          </datalist>
+        </div>
+        <div>
+          <label class="label" for="state">State</label>
+          <input
+            id="state"
+            class="input"
+            formControlName="state"
+            list="stateOptions"
+            autocomplete="off"
+            placeholder="Start typing…"
+          />
+          <datalist id="stateOptions">
+            @for (s of states; track s) {
+              <option [value]="s"></option>
+            }
+          </datalist>
+        </div>
       </div>
-      <div>
-        <label class="label" for="state">State</label>
-        <input id="state" class="input" formControlName="state" />
-      </div>
-    </div>
 
-    <div>
-      <label class="label" for="address">Address</label>
-      <textarea id="address" class="input" rows="2" formControlName="address"></textarea>
-    </div>
+      <div>
+        <label class="label" for="address">Address</label>
+        <textarea id="address" class="input" rows="2" formControlName="address"></textarea>
+      </div>
     </div>
 
     <div class="flex items-center gap-3">
@@ -148,3 +300,29 @@
     </div>
   </form>
 </div>
+
+@if (createdLead(); as lead) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    (click)="closeSuccess()"
+  >
+    <div
+      class="card w-full max-w-sm p-5 shadow-[var(--shadow-popover)]"
+      (click)="$event.stopPropagation()"
+    >
+      <div
+        class="h-10 w-10 rounded-full bg-[var(--color-success-soft)] text-[var(--color-success)] flex items-center justify-center mb-3"
+      >
+        <app-icon name="check" [size]="20" />
+      </div>
+      <h2 class="text-lg font-semibold">Lead added</h2>
+      <p class="mt-2 text-sm text-[var(--color-text-muted)]">
+        {{ lead.name }} ({{ lead.phone }}) was added successfully.
+      </p>
+      <div class="mt-6 flex items-center justify-end gap-3">
+        <a [routerLink]="['/dashboard/enquiries', lead._id]" class="btn-ghost">View lead</a>
+        <button type="button" class="btn-primary" (click)="closeSuccess()">Close</button>
+      </div>
+    </div>
+  </div>
+}

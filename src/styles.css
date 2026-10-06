@@ -193,3 +193,21 @@ quill-editor .ql-toolbar {
   border-top-right-radius: var(--radius-md);
   background: var(--color-surface-alt);
 }
+
+/* ------------------------------------------------------------------ */
+/* Phones & touch devices only — nothing here applies on a desktop.    */
+/* ------------------------------------------------------------------ */
+@media (max-width: 639px) {
+  /* iOS Safari zooms the page when focusing an input smaller than 16px. */
+  .input {
+    font-size: 1rem;
+  }
+}
+
+@media (pointer: coarse) {
+  /* Default checkboxes are 13–16px: too small to tap reliably. */
+  input[type='checkbox'] {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}

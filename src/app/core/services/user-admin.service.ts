@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiSuccess, User, UserRole, UserStatus } from '../models/user.model';
+import { PageParams, appendPageParams } from '../models/pagination.model';
 
 export interface CreateUserPayload {
   firstName: string;
@@ -29,8 +30,12 @@ export class UserAdminService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/users`;
 
-  getAll(): Observable<ApiSuccess<User[]>> {
-    return this.http.get<ApiSuccess<User[]>>(this.baseUrl);
+  /** Pass `page` for one server-side page (response includes `meta`); omit for everyone. */
+  getAll(page?: PageParams): Observable<ApiSuccess<User[]>> {
+    const query = new URLSearchParams();
+    appendPageParams(query, page);
+    const qs = query.toString();
+    return this.http.get<ApiSuccess<User[]>>(qs ? `${this.baseUrl}?${qs}` : this.baseUrl);
   }
 
   getById(id: string): Observable<ApiSuccess<User>> {
