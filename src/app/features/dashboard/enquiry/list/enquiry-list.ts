@@ -3,7 +3,7 @@ import { DEFAULT_PAGE_SIZE, PageMeta } from '../../../../core/models/pagination.
 import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import {
   BulkAssignResult,
@@ -27,6 +27,13 @@ import {
   FollowUpFilter,
 } from '../../../../core/models/enquiry.model';
 import { formatEnumLabel } from '../../../../shared/utils/format-label';
+import {
+  EnquiryListQuery,
+  EnquiryListState,
+  fromQueryParams,
+  sameParams,
+  toQueryParams,
+} from './enquiry-list-state';
 
 interface StatusOption {
   label: string;
@@ -57,6 +64,9 @@ const STATUS_BADGE_CLASS: Record<EnquiryStatus, string> = {
 export class EnquiryList {
   private readonly enquiryService = inject(EnquiryService);
   private readonly userAdminService = inject(UserAdminService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly listState = inject(EnquiryListState);
   readonly authService = inject(AuthService);
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
@@ -126,7 +136,12 @@ export class EnquiryList {
   readonly importResult = signal<ImportResult | null>(null);
 
   constructor() {
-    this.reload();
+    // Come back to the same page and filters the user left (the URL carries them).
+    const saved = fromQueryParams(this.route.snapshot.queryParamMap);
+    this.applyQuery(saved);
+    this.filtersOpen.set(this.activeFilterCount() > 0);
+    this.loadPage();
+    this.loadStats();
 
     if (this.authService.isAdmin()) {
       this.userAdminService.getAll().subscribe({
@@ -149,18 +164,58 @@ export class EnquiryList {
     };
   }
 
-  /** Filters changed (or first load): back to page 1, and refresh the stat cards. */
-  private reload(): void {
-    this.page.set(1);
-    this.loadPage();
+  private applyQuery(q: EnquiryListQuery): void {
+    this.page.set(q.page);
+    this.limit.set(q.limit);
+    this.statusFilter.set(q.status);
+    this.sourceFilter.set(q.source);
+    this.categoryFilter.set(q.category);
+    // The assignee filter is admin-only (the server ignores it for everyone else).
+    this.assigneeFilter.set(this.authService.isAdmin() ? q.assignedTo : '');
+    this.followUpFilter.set(q.followUp);
+    this.dateFrom.set(q.dateFrom);
+    this.dateTo.set(q.dateTo);
+    this.search.set(q.search);
+  }
 
+  /** Mirrors the list state into the URL (replacing, not stacking, history entries). */
+  private syncUrl(): void {
+    const params = toQueryParams({
+      ...this.currentFilter(),
+      page: this.page(),
+      limit: this.limit(),
+    });
+    this.listState.params.set(params);
+
+    const current: Record<string, string> = {};
+    this.route.snapshot.queryParamMap.keys.forEach(
+      (k) => (current[k] = this.route.snapshot.queryParamMap.get(k) ?? ''),
+    );
+    if (sameParams(current, params)) return;
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: params,
+      replaceUrl: true,
+    });
+  }
+
+  private loadStats(): void {
     this.enquiryService.getStats(this.currentFilter()).subscribe({
       next: (res) => this.stats.set(res.data),
       error: () => {},
     });
   }
 
+  /** Filters changed: back to page 1, and refresh the stat cards. */
+  private reload(): void {
+    this.page.set(1);
+    this.loadPage();
+    this.loadStats();
+  }
+
   private loadPage(): void {
+    this.syncUrl();
     this.loading.set(true);
     this.errorMessage.set('');
 

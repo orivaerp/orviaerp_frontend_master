@@ -1,6 +1,7 @@
 <div class="mx-auto max-w-2xl space-y-6 p-4 sm:p-6">
   <a
     routerLink="/dashboard/enquiries"
+    [queryParams]="listState.params()"
     class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
   >
     ← Back to enquiries

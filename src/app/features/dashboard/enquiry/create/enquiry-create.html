@@ -2,6 +2,7 @@
   <div>
     <a
       routerLink="/dashboard/enquiries"
+      [queryParams]="listState.params()"
       class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
     >
       ← Back to enquiries
@@ -296,7 +297,9 @@
       <button type="submit" class="btn-primary" [disabled]="loading()">
         {{ loading() ? 'Saving…' : 'Add lead' }}
       </button>
-      <a routerLink="/dashboard/enquiries" class="btn-ghost">Cancel</a>
+      <a routerLink="/dashboard/enquiries" [queryParams]="listState.params()" class="btn-ghost"
+        >Cancel</a
+      >
     </div>
   </form>
 </div>

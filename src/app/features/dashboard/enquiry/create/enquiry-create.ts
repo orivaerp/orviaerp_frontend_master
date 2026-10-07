@@ -9,6 +9,7 @@ import {
   buildLeadImportSampleCsv,
 } from '../../../../shared/data/lead-import-sample';
 import { Icon } from '../../../../shared/components/icon/icon';
+import { EnquiryListState } from '../list/enquiry-list-state';
 import { UserAdminService } from '../../../../core/services/user-admin.service';
 import { User } from '../../../../core/models/user.model';
 import { INDIA_CITIES, INDIA_STATES } from '../../../../shared/data/india-locations';
@@ -45,6 +46,7 @@ export class EnquiryCreate {
   readonly label = formatEnumLabel;
 
   private readonly userAdminService = inject(UserAdminService);
+  readonly listState = inject(EnquiryListState);
 
   readonly products = signal<Product[]>([]);
   /** Everyone an admin can assign the new lead to. */

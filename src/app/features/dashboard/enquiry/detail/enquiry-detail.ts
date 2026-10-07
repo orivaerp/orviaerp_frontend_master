@@ -8,6 +8,7 @@ import { ProductService } from '../../../../core/services/product.service';
 import { UserAdminService } from '../../../../core/services/user-admin.service';
 import { Icon } from '../../../../shared/components/icon/icon';
 import { telHref } from '../../../../shared/utils/phone';
+import { EnquiryListState } from '../list/enquiry-list-state';
 import { User } from '../../../../core/models/user.model';
 import {
   buildTimeline,
@@ -49,6 +50,8 @@ export class EnquiryDetail {
   readonly authService = inject(AuthService);
   private readonly productService = inject(ProductService);
   private readonly userAdminService = inject(UserAdminService);
+  /** Where the list was (page + filters) when the user opened this lead. */
+  readonly listState = inject(EnquiryListState);
   private readonly confirmDialog = inject(ConfirmDialogService);
 
   private readonly enquiryId = this.route.snapshot.paramMap.get('id') ?? '';
@@ -362,7 +365,8 @@ export class EnquiryDetail {
 
     this.deleting.set(true);
     this.enquiryService.delete(this.enquiryId).subscribe({
-      next: () => this.router.navigate(['/dashboard/enquiries']),
+      next: () =>
+        this.router.navigate(['/dashboard/enquiries'], { queryParams: this.listState.params() }),
       error: (err) => {
         this.deleting.set(false);
         this.errorMessage.set(err?.error?.message ?? 'Could not delete this enquiry');
