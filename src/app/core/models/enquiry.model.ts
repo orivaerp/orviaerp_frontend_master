@@ -1,8 +1,10 @@
-export type EnquiryStatus = 'new' | 'contacted' | 'in-progress' | 'converted' | 'lost' | 'wrong' | 'closed';
+export type EnquiryStatus =
+  'new' | 'contacted' | 'interested' | 'in-progress' | 'converted' | 'lost' | 'wrong' | 'closed';
 
 export const ENQUIRY_STATUSES: EnquiryStatus[] = [
   'new',
   'contacted',
+  'interested',
   'in-progress',
   'converted',
   'lost',
@@ -41,15 +43,34 @@ export const ENQUIRY_SOURCES: EnquirySource[] = [
 
 export type EnquiryCategory = 'health' | 'education' | 'transport' | 'retail' | 'portfolio';
 
-export const ENQUIRY_CATEGORIES: EnquiryCategory[] = ['health', 'education', 'transport', 'retail', 'portfolio'];
+export const ENQUIRY_CATEGORIES: EnquiryCategory[] = [
+  'health',
+  'education',
+  'transport',
+  'retail',
+  'portfolio',
+];
 
 /** Suggested sub-categories per domain — shown as datalist hints; the field itself is free text. */
 export const ENQUIRY_SUBCATEGORY_SUGGESTIONS: Record<EnquiryCategory, string[]> = {
-  health: ['Hospital', 'Clinic', 'Pharmacy', 'Diagnostic Center', 'Wellness Center','Physio Clinic','Dental Clinic'],
+  health: [
+    'Hospital',
+    'Clinic',
+    'Pharmacy',
+    'Diagnostic Center',
+    'Wellness Center',
+    'Physio Clinic',
+    'Dental Clinic',
+  ],
   education: ['School', 'College', 'Coaching Institute', 'Online Course', 'Training Center'],
   transport: ['Logistics', 'Cab Service', 'Courier', 'Fleet Management', 'Freight'],
   retail: ['Retail Store', 'Supermarket', 'E-commerce', 'Wholesale', 'Showroom'],
-  portfolio: ['Personal Portfolio', 'Agency Portfolio', 'Freelancer Portfolio', 'Photography Portfolio'],
+  portfolio: [
+    'Personal Portfolio',
+    'Agency Portfolio',
+    'Freelancer Portfolio',
+    'Photography Portfolio',
+  ],
 };
 
 /** A populated user reference (assignee, author, actor …) — or just the id if not populated. */

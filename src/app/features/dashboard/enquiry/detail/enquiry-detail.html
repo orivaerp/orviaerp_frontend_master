@@ -31,8 +31,14 @@
           }
         </p>
       </div>
-      @if (!editing()) {
-        <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2">
+        @if (telHref(e.phone); as tel) {
+          <a [href]="tel" class="btn-primary" [attr.aria-label]="'Call ' + e.name">
+            <app-icon name="phone" [size]="15" />
+            Call
+          </a>
+        }
+        @if (!editing()) {
           <button type="button" class="btn-outline" (click)="startEdit()">Edit</button>
           @if (authService.isAdmin()) {
             <button
@@ -44,8 +50,8 @@
               {{ deleting() ? 'Deleting…' : 'Delete' }}
             </button>
           }
-        </div>
-      }
+        }
+      </div>
     </div>
 
     <div class="card p-5 space-y-4">

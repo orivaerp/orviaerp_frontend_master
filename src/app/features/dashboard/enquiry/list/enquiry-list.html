@@ -85,7 +85,7 @@
 
   <!-- Stat cards -->
   <div
-    class="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-8"
+    class="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-5 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-9"
   >
     <div class="card min-w-[96px] shrink-0 p-4 sm:min-w-0">
       <p class="text-xs text-[var(--color-text-muted)]">Total</p>
@@ -390,12 +390,24 @@
                   label(enquiry.status)
                 }}</span>
               </div>
-              <p class="break-words text-xs text-[var(--color-text-muted)]">
-                <a [href]="'tel:' + enquiry.phone" class="hover:underline">{{ enquiry.phone }}</a>
-                @if (enquiry.email) {
-                  · {{ enquiry.email }}
+              <div class="flex items-center justify-between gap-2">
+                <p class="min-w-0 break-words text-xs text-[var(--color-text-muted)]">
+                  {{ enquiry.phone }}
+                  @if (enquiry.email) {
+                    · {{ enquiry.email }}
+                  }
+                </p>
+                @if (telHref(enquiry.phone); as tel) {
+                  <a
+                    [href]="tel"
+                    class="btn-outline shrink-0 !gap-1.5 !px-3 !py-1.5 text-xs"
+                    [attr.aria-label]="'Call ' + enquiry.name"
+                  >
+                    <app-icon name="phone" [size]="14" />
+                    Call
+                  </a>
                 }
-              </p>
+              </div>
               @if (enquiry.message) {
                 <p class="line-clamp-2 text-sm text-[var(--color-text-muted)]">
                   {{ enquiry.message }}
@@ -487,6 +499,17 @@
                   </a>
                   <p class="text-xs text-[var(--color-text-muted)]">
                     {{ enquiry.phone }}
+                    @if (telHref(enquiry.phone); as tel) {
+                      <a
+                        [href]="tel"
+                        class="ml-1 inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] px-2 py-0.5 align-middle text-[11px] font-medium text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)]"
+                        [attr.aria-label]="'Call ' + enquiry.name"
+                        [title]="'Call ' + enquiry.phone"
+                      >
+                        <app-icon name="phone" [size]="11" />
+                        Call
+                      </a>
+                    }
                     @if (enquiry.email) {
                       &nbsp;·&nbsp;{{ enquiry.email }}
                     }

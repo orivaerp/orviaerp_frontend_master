@@ -13,6 +13,8 @@ import {
 import { UserAdminService } from '../../../../core/services/user-admin.service';
 import { User } from '../../../../core/models/user.model';
 import { FollowUpState, followUpState, personName } from '../shared/lead-activity';
+import { Icon } from '../../../../shared/components/icon/icon';
+import { telHref } from '../../../../shared/utils/phone';
 import {
   ENQUIRY_CATEGORIES,
   ENQUIRY_SOURCES,
@@ -39,6 +41,7 @@ const STATUS_OPTIONS: StatusOption[] = [
 const STATUS_BADGE_CLASS: Record<EnquiryStatus, string> = {
   new: 'badge bg-[var(--color-primary-50)] text-[var(--color-primary-700)]',
   contacted: 'badge bg-amber-50 text-amber-700',
+  interested: 'badge bg-sky-50 text-sky-700',
   'in-progress': 'badge bg-amber-50 text-amber-700',
   converted: 'badge-success',
   lost: 'badge bg-[var(--color-danger-soft)] text-[var(--color-danger)]',
@@ -48,7 +51,7 @@ const STATUS_BADGE_CLASS: Record<EnquiryStatus, string> = {
 
 @Component({
   selector: 'app-enquiry-list',
-  imports: [Pagination, RouterLink, SlicePipe, DatePipe, FormsModule],
+  imports: [Pagination, RouterLink, SlicePipe, DatePipe, FormsModule, Icon],
   templateUrl: './enquiry-list.html',
 })
 export class EnquiryList {
@@ -115,6 +118,7 @@ export class EnquiryList {
   );
 
   readonly personName = personName;
+  readonly telHref = telHref;
   readonly followUpState = followUpState;
 
   readonly exporting = signal(false);

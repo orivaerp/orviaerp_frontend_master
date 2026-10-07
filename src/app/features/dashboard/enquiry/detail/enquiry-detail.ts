@@ -6,6 +6,8 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { EnquiryService } from '../../../../core/services/enquiry.service';
 import { ProductService } from '../../../../core/services/product.service';
 import { UserAdminService } from '../../../../core/services/user-admin.service';
+import { Icon } from '../../../../shared/components/icon/icon';
+import { telHref } from '../../../../shared/utils/phone';
 import { User } from '../../../../core/models/user.model';
 import {
   buildTimeline,
@@ -31,7 +33,7 @@ import { formatEnumLabel } from '../../../../shared/utils/format-label';
 
 @Component({
   selector: 'app-enquiry-detail',
-  imports: [RouterLink, FormsModule, ReactiveFormsModule, SlicePipe, DatePipe],
+  imports: [RouterLink, FormsModule, ReactiveFormsModule, SlicePipe, DatePipe, Icon],
   templateUrl: './enquiry-detail.html',
 })
 export class EnquiryDetail {
@@ -84,6 +86,7 @@ export class EnquiryDetail {
   });
 
   readonly personName = personName;
+  readonly telHref = telHref;
   readonly followUpState = followUpState;
 
   readonly editing = signal(false);
